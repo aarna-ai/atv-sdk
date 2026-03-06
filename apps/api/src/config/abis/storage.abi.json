@@ -1,0 +1,5 @@
+[
+  "function calculatePoolInUsd(address afiToken) view returns (uint256)",
+  "function getAPY(address afiToken) view returns (uint256)",
+  "function totalSupply() view returns (uint256)"
+]

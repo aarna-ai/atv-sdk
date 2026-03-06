@@ -1,0 +1,11 @@
+[
+  "function getCurrentNAV() view returns (uint256)",
+  "function getCurrentTVL() view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "function asset() view returns (address)",
+  "function getQueuedUsers() view returns (uint256[] requestIds, address[] users, uint256[] balances)",
+  "function nonWithdrawableShares(address user, uint256 counter) view returns (uint256)",
+  "function getNonWithdrawableShares(address user, uint256 counter) view returns (uint256)",
+  "function deposit(address depositToken, uint256 amount, address user) returns (bool)",
+  "function withdraw(address outputToken, uint256 shares, uint256 minOut, address user) returns (bool)"
+]

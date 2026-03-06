@@ -1,0 +1,5 @@
+[
+  "function getPricePerFullShare(address afiToken, address storageAddress) view returns (uint256)",
+  "function deposit(address afiToken, address storageAddress, address depositToken, uint256 amount, address user) returns (bool)",
+  "function withdraw(address afiToken, address storageAddress, address outputToken, uint256 shares, uint256 minOut, address user) returns (bool)"
+]

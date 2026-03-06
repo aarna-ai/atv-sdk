@@ -1,0 +1,8 @@
+[
+  "function totalSupply() view returns (uint256)",
+  "function totalStaked(address afiToken) view returns (uint256)",
+  "function initiateWithdraw(uint256 shares, address user) returns (bool)",
+  "function queueWithdraw(address afiToken, uint256 shares, address outputToken) returns (uint256 requestId)",
+  "function unqueueWithdraw(address outputToken, uint256 requestId) returns (bool)",
+  "function redeemWithdraw(address user, address afiToken, address[] outputTokens, uint256 batchCounter) returns (bool)"
+]
