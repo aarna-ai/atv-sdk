@@ -2,11 +2,16 @@ import "dotenv/config";
 import { execSync } from "child_process";
 import { createApp } from "./app";
 import { pool } from "./db/postgres";
+import { runMigrations } from "./db/migrate";
 import { env } from "./config/env";
 
 async function bootstrap() {
   await pool.query("SELECT 1");
   console.log("Database connected");
+
+  console.log("Running migrations...");
+  await runMigrations();
+  console.log("Migrations complete");
 
   // Automatically kill any process using the configured port
   try {
