@@ -1,26 +1,29 @@
-import { ALLOWED_VAULT_ID_SET } from "./env";
 import { cmsService } from "../services/cms.service";
+import { pool } from "../db/postgres";
 import { IAtvVault } from "../types/vault.types";
 
 /**
  * Vault registry — the single source of truth for vault configs across this service.
  *
  * Data flow:
- *   Strapi CMS → strapiService (with TTL cache) → vaultRegistry (applies allowlist) → services
+ *   Strapi CMS → cmsService (TTL cache) → vaultRegistry (DB allowlist) → services
  *
  * Access control:
- *   Set ALLOWED_VAULT_IDS=atvUSDC,atvETH in your .env to restrict which vaults
- *   are exposed via this API. Leave empty to expose all vaults from Strapi.
- *   Changes take effect on the next cache refresh (default: 5 min) or server restart.
- *   For immediate effect, call vaultRegistry.invalidateCache().
+ *   Vault visibility is controlled by the `vault_allowlist` table in PostgreSQL.
+ *   New vaults from Strapi are auto-inserted with is_allowed = FALSE.
+ *   Enable a vault: UPDATE vault_allowlist SET is_allowed = TRUE WHERE product_id = '...';
+ *   Changes take effect within STRAPI_CACHE_TTL_MS, or immediately via invalidateCache().
  */
 class VaultRegistry {
   /**
-   * Returns the allowlist-filtered list of vaults.
+   * Returns the DB-allowlist-filtered list of vaults.
+   * Also auto-inserts any new vaults from Strapi into the allowlist table (is_allowed = FALSE).
    */
   async getVaults(): Promise<IAtvVault[]> {
     const all = await cmsService.getVaults();
-    return this.applyAllowlist(all);
+    await this.syncNewVaults(all);
+    const allowed = await this.getAllowedProductIds();
+    return all.filter((v) => allowed.has(v.productId));
   }
 
   /**
@@ -58,11 +61,35 @@ class VaultRegistry {
     cmsService.invalidateCache();
   }
 
-  private applyAllowlist(vaults: IAtvVault[]): IAtvVault[] {
-    if (ALLOWED_VAULT_ID_SET.size === 0) {
-      return vaults; // no restriction — expose everything
+  /**
+   * Inserts any vault not yet present in vault_allowlist.
+   * Existing rows are untouched (ON CONFLICT DO NOTHING), so is_allowed flags are preserved.
+   */
+  private async syncNewVaults(vaults: IAtvVault[]): Promise<void> {
+    if (vaults.length === 0) return;
+    const client = await pool.connect();
+    try {
+      for (const v of vaults) {
+        await client.query(
+          `INSERT INTO vault_allowlist (product_id, label)
+           VALUES ($1, $2)
+           ON CONFLICT (product_id) DO NOTHING`,
+          [v.productId, v.label],
+        );
+      }
+    } finally {
+      client.release();
     }
-    return vaults.filter((v) => ALLOWED_VAULT_ID_SET.has(v.productId));
+  }
+
+  /**
+   * Returns the set of product_ids that have is_allowed = TRUE in the DB.
+   */
+  private async getAllowedProductIds(): Promise<Set<string>> {
+    const { rows } = await pool.query<{ product_id: string }>(
+      `SELECT product_id FROM vault_allowlist WHERE is_allowed = TRUE`,
+    );
+    return new Set(rows.map((r) => r.product_id));
   }
 }
 

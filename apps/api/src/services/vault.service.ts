@@ -13,14 +13,22 @@ import {
   TvlResponse,
   VaultMetadata,
 } from "../types/api.types";
-import { IAtvVault } from "../types/vault.types";
+import { DepositContractType, IAtvVault } from "../types/vault.types";
 
 export class VaultService {
-  private toMetadata(v: IAtvVault, depositTokens: DepositToken[]): VaultMetadata {
+  private toMetadata(
+    v: IAtvVault,
+    depositTokens: DepositToken[],
+  ): VaultMetadata {
     return {
       productId: formatVaultID(v.productId),
       label: v.label,
-      address: v.afiTokenAddress,
+      address:
+        v.depositContractType === DepositContractType.ERC4626 &&
+        v.productType !== 4 &&
+        v.contracts.timelock
+          ? v.contracts.timelock.address.toLowerCase()
+          : v.afiTokenAddress.toLowerCase(),
       chain: v.chain.name ?? v.chain.hex,
       withdrawType: v.withdrawType,
       contractType: v.depositContractType,
@@ -48,7 +56,10 @@ export class VaultService {
     );
   }
 
-  async getVault(address: string, userAddress?: string): Promise<VaultMetadata> {
+  async getVault(
+    address: string,
+    userAddress?: string,
+  ): Promise<VaultMetadata> {
     const v = await vaultRegistry.getVaultOrThrow(address);
     return this.toMetadata(v, await this.getDepositTokens(v, userAddress));
   }
@@ -148,9 +159,10 @@ export class VaultService {
         }),
       );
     } catch (e: any) {
-      console.warn(
-        `[VaultService] getDepositTokens failed for vault ${vault.productId}:`,
-        e.message,
+      console.error(
+        `[VaultService] getDepositTokens failed for vault ${vault.productId} ` +
+        `(afiTokenAddress=${vault.afiTokenAddress}, chainId=${vault.chain.decimal}):`,
+        e,
       );
       return [];
     }

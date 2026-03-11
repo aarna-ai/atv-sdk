@@ -25,7 +25,7 @@ class EthersHelper {
                     `No RPC URL configured for chainId: ${chainId} (${chain.hex}). Add RPC_URL_* in .env`,
                 );
             }
-            this.providers.set(chainId, new ethers.JsonRpcProvider(url));
+            this.providers.set(chainId, new ethers.JsonRpcProvider(url, undefined, { batchMaxCount: 1 }));
         }
         return this.providers.get(chainId)!;
     }
