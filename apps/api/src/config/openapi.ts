@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 /**
  * OpenAPI 3.1 specification for the ATV Vault API.
  * Served via Scalar at GET /docs
@@ -14,10 +16,9 @@ export const openApiSpec = {
     },
   },
   servers: [
-    {
-      url: "http://localhost:3000",
-      description: "Local development",
-    },
+    ...(env.NODE_ENV !== "production"
+      ? [{ url: "http://localhost:3000", description: "Local development" }]
+      : []),
     {
       url: "https://atv-api.aarna.ai",
       description: "Production",
