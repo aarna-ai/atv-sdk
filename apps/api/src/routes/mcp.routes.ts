@@ -1,5 +1,5 @@
 // @ts-nocheck — MCP SDK zod generics exceed TS type instantiation depth limit (TS2589)
-import { Router } from "express";
+import { Router, type IRouter } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -162,7 +162,7 @@ Available tools:
   return server;
 }
 
-export const mcpRouter = Router();
+export const mcpRouter: IRouter = Router();
 
 mcpRouter.use(apiKeyMiddleware);
 mcpRouter.use(rateLimitMiddleware);
