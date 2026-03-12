@@ -49,7 +49,7 @@ RUN secrets_json=$(aws secretsmanager get-secret-value \
       echo "$secrets_json" | jq -r 'to_entries | .[] | "\(.key)=\"\(.value | tostring)\""' > .env; \
     fi
 
-# Unset AWS credentials after fetching secrets
+# Unset AWS credentials after fetching secrets.
 ENV AWS_ACCESS_KEY_ID=""
 ENV AWS_SECRET_ACCESS_KEY=""
 ENV AWS_DEFAULT_REGION=""
