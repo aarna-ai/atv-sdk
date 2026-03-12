@@ -29,6 +29,9 @@ jobs:
       - name: Build and push to ECR
         run: |
           docker build \
+            --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --build-arg AWS_DEFAULT_REGION=us-east-1 \
             -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest .
 
           docker push \
@@ -58,4 +61,4 @@ jobs:
               --restart unless-stopped \
               ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest
 
-            docker image prune -f
+            docker image prune -f  
