@@ -4,6 +4,7 @@ import express, { Application } from 'express';
 import helmet from 'helmet';
 import { openApiSpec } from './config/openapi';
 import { v1Router } from './routes';
+import { mcpRouter } from './routes/mcp.routes';
 
 export function createApp(): Application {
     const app = express();
@@ -45,6 +46,7 @@ export function createApp(): Application {
     );
 
     app.use('/v1', v1Router);
+    app.use('/mcp', mcpRouter);
 
     // Global error handler — must be last
     app.use(
