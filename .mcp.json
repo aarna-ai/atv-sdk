@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "atv": {
-      "url": "http://localhost:3000/mcp",
+      "url": "https://atv-api.aarna.ai/mcp",
       "headers": {
         "x-api-key": "your-api-key-here"
       }
