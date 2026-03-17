@@ -65,6 +65,23 @@ export function createApp(): Application {
         });
     });
 
+    // MCP Server Card — enables Smithery and other registries to discover this server
+    app.get('/.well-known/mcp/server-card.json', (_req, res) => {
+        res.json({
+            name: 'ATV',
+            description:
+                "Access Aarna's DeFi yield vaults — query NAV/TVL/APY, build transactions, track portfolios.",
+            url: 'https://atv-api.aarna.ai/mcp',
+            transport: 'streamable-http',
+            authentication: {
+                type: 'apiKey',
+                in: 'header',
+                name: 'x-api-key',
+            },
+            version: '1.0.1',
+        });
+    });
+
     // Serve the OpenAPI spec as JSON (useful for tooling / SDK generation)
     app.get('/openapi.json', (_req, res) => {
         res.json(openApiSpec);
