@@ -102,7 +102,10 @@ export const vaultsHandler = {
     ) => {
         try {
             const data = await vaultService.getQueueWithdrawStatus(req.params.address);
-            res.json({ data, message: 'Queue withdraw status retrieved', statusCode: 200 });
+            const message = data.supported
+                ? 'Queue withdraw status retrieved'
+                : 'Queue withdraw method not supported for this vault';
+            res.json({ data, message, statusCode: 200 });
         } catch (err) {
             next(err);
         }

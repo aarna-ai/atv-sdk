@@ -60,9 +60,9 @@ class CmsService {
   }
 
   async getVaults(): Promise<IAtvVault[]> {
-    // if (this.isCacheValid) {
-    //   return this.cache!.vaults;
-    // }
+    if (this.isCacheValid) {
+      return this.cache!.vaults;
+    }
 
     const vaults = await this.fetchFromCms();
     this.cache = { vaults, fetchedAt: Date.now() };
@@ -164,9 +164,7 @@ class CmsService {
         (item.depositContractType?.toUpperCase() as DepositContractType) ??
         DepositContractType.ERC20,
       withdrawType: item.withdrawType?.length
-        ? (item.withdrawType.map((w) =>
-            w.toUpperCase(),
-          ) as WithdrawType[])
+        ? (item.withdrawType.map((w) => w.toUpperCase()) as WithdrawType[])
         : [WithdrawType.INSTANT],
       depositFee: item.depositFee,
       contracts: {

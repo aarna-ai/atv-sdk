@@ -71,7 +71,6 @@ export interface ApyResponse {
 }
 
 export interface VaultStatusResponse {
-  vaultAddress: string;
   isPaused: boolean;
   supported: boolean; // false when contract doesn't expose the status function
 }

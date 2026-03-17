@@ -1,6 +1,6 @@
 import { cmsService } from "../services/cms.service";
 import { pool } from "../db/postgres";
-import { IAtvVault } from "../types/vault.types";
+import { DepositContractType, IAtvVault } from "../types/vault.types";
 
 /**
  * Vault registry — the single source of truth for vault configs across this service.
@@ -27,12 +27,22 @@ class VaultRegistry {
   }
 
   /**
-   * Returns a map of lowercase atvTokenAddress → IAtvVault for O(1) lookup.
+   * Returns a map of lookup address → IAtvVault for O(1) lookup.
+   *
+   * For ERC4626 vaults the user-facing address is the timelock contract,
+   * so we key by timelock address. All other vaults key by atvTokenAddress.
    */
   async getVaultMap(): Promise<Record<string, IAtvVault>> {
     const vaults = await this.getVaults();
     return Object.fromEntries(
-      vaults.map((v) => [v.atvTokenAddress.toLowerCase(), v]),
+      vaults.map((v) => {
+        const key =
+          v.depositContractType === DepositContractType.ERC4626 &&
+          v.contracts.timelock?.address
+            ? v.contracts.timelock.address.toLowerCase()
+            : v.atvTokenAddress.toLowerCase();
+        return [key, v];
+      }),
     );
   }
 

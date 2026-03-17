@@ -14,7 +14,7 @@ import {
   VaultMetadata,
   VaultStatusResponse,
 } from "../types/api.types";
-import { IAtvVault } from "../types/vault.types";
+import { IAtvVault, WithdrawType } from "../types/vault.types";
 
 export class VaultService {
   private toMetadata(
@@ -157,7 +157,7 @@ export class VaultService {
     } catch (e: any) {
       console.error(
         `[VaultService] getDepositTokens failed for vault ${vault.productId} ` +
-        `(atvTokenAddress=${vault.atvTokenAddress}, chainId=${vault.chain.decimal}):`,
+          `(atvTokenAddress=${vault.atvTokenAddress}, chainId=${vault.chain.decimal}):`,
         e,
       );
       return [];
@@ -288,9 +288,9 @@ export class VaultService {
         [],
         vault.chain,
       );
-      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+      return { isPaused, supported: true };
     } catch {
-      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+      return { isPaused: false, supported: false };
     }
   }
 
@@ -304,14 +304,28 @@ export class VaultService {
         [],
         vault.chain,
       );
-      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+      return { isPaused, supported: true };
     } catch {
-      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+      return { isPaused: false, supported: false };
     }
   }
 
+  private static QUEUE_WITHDRAW_TYPES = new Set<WithdrawType>([
+    WithdrawType.STANDARD,
+    WithdrawType.STANDARD_AUTO_REDEEM,
+  ]);
+
   async getQueueWithdrawStatus(address: string): Promise<VaultStatusResponse> {
     const vault = await vaultRegistry.getVaultOrThrow(address);
+
+    // Check if the vault supports queued withdrawals based on CMS config
+    const supportsQueue = vault.withdrawType.some((t) =>
+      VaultService.QUEUE_WITHDRAW_TYPES.has(t),
+    );
+    if (!supportsQueue) {
+      return { isPaused: false, supported: false };
+    }
+
     try {
       const isPaused = await ethersHelper.readContract<boolean>(
         vault.contracts.base.address,
@@ -320,9 +334,9 @@ export class VaultService {
         [],
         vault.chain,
       );
-      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+      return { isPaused, supported: true };
     } catch {
-      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+      return { isPaused: false, supported: false };
     }
   }
 }
