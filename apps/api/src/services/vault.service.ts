@@ -12,8 +12,9 @@ import {
   NavResponse,
   TvlResponse,
   VaultMetadata,
+  VaultStatusResponse,
 } from "../types/api.types";
-import { DepositContractType, IAtvVault } from "../types/vault.types";
+import { IAtvVault } from "../types/vault.types";
 
 export class VaultService {
   private toMetadata(
@@ -23,12 +24,7 @@ export class VaultService {
     return {
       productId: formatVaultID(v.productId),
       label: v.label,
-      address:
-        v.depositContractType === DepositContractType.ERC4626 &&
-        v.productType !== 4 &&
-        v.contracts.timelock
-          ? v.contracts.timelock.address.toLowerCase()
-          : v.afiTokenAddress.toLowerCase(),
+      address: v.atvTokenAddress.toLowerCase(),
       chain: v.chain.name ?? v.chain.hex,
       withdrawType: v.withdrawType,
       contractType: v.depositContractType,
@@ -74,7 +70,7 @@ export class VaultService {
       if (vault.productType === 4) {
         // Leverage vault: single asset via ERC4626 asset()
         const token = await ethersHelper.readContract<string>(
-          vault.afiTokenAddress,
+          vault.atvTokenAddress,
           ["function asset() view returns (address)"],
           "asset",
           [],
@@ -84,7 +80,7 @@ export class VaultService {
       } else {
         // Standard vault: getInputToken() returns (address[] tokens, address[] oTokens)
         const result = await ethersHelper.readContract<[string[], string[]]>(
-          vault.afiTokenAddress,
+          vault.atvTokenAddress,
           ["function getInputToken() view returns (address[], address[])"],
           "getInputToken",
           [],
@@ -161,7 +157,7 @@ export class VaultService {
     } catch (e: any) {
       console.error(
         `[VaultService] getDepositTokens failed for vault ${vault.productId} ` +
-        `(afiTokenAddress=${vault.afiTokenAddress}, chainId=${vault.chain.decimal}):`,
+        `(atvTokenAddress=${vault.atvTokenAddress}, chainId=${vault.chain.decimal}):`,
         e,
       );
       return [];
@@ -187,7 +183,7 @@ export class VaultService {
         vault.chain.apiHex === EvmChain.BASE.apiHex ? [inputTokenAddress] : [];
 
       const result = await ethersHelper.readContract<bigint>(
-        vault.afiTokenAddress,
+        vault.atvTokenAddress,
         vaultAbi,
         "minimumDepositLimit",
         args,
@@ -213,7 +209,7 @@ export class VaultService {
         vault.chain,
       );
       return {
-        address: vault.afiTokenAddress,
+        address: vault.atvTokenAddress,
         nav: nav.toString(),
         decimals: 18,
         formattedNav: formatUnits(nav, 18),
@@ -221,16 +217,16 @@ export class VaultService {
       };
     }
 
-    // Standard vault: factory.getPricePerFullShare(afiToken, storage) → 4 decimals
+    // Standard vault: factory.getPricePerFullShare(atvToken, storage) → 4 decimals
     const nav = await ethersHelper.readContract<bigint>(
       vault.contracts.factory.address,
       vault.contracts.factory.abi,
       "getPricePerFullShare",
-      [vault.afiTokenAddress, vault.contracts.storage.address],
+      [vault.atvTokenAddress, vault.contracts.storage.address],
       vault.chain,
     );
     return {
-      address: vault.afiTokenAddress,
+      address: vault.atvTokenAddress,
       nav: nav.toString(),
       decimals: 4,
       formattedNav: formatUnits(nav, 4),
@@ -250,7 +246,7 @@ export class VaultService {
         vault.chain,
       );
       return {
-        address: vault.afiTokenAddress,
+        address: vault.atvTokenAddress,
         tvl: tvl.toString(),
         decimals: 18,
         formattedTvl: formatUnits(tvl, 18),
@@ -262,11 +258,11 @@ export class VaultService {
       vault.contracts.storage.address,
       vault.contracts.storage.abi,
       "calculatePoolInUsd",
-      [vault.afiTokenAddress],
+      [vault.atvTokenAddress],
       vault.chain,
     );
     return {
-      address: vault.afiTokenAddress,
+      address: vault.atvTokenAddress,
       tvl: tvl.toString(),
       decimals: 18,
       formattedTvl: formatUnits(tvl, 18),
@@ -277,9 +273,57 @@ export class VaultService {
   async getAPY(address: string): Promise<ApyResponse> {
     const vault = await vaultRegistry.getVaultOrThrow(address);
     const { baseApy, rewardApy, totalApy } = await engineService.getVaultApy(
-      vault.afiTokenAddress,
+      vault.atvTokenAddress,
     );
-    return { address: vault.afiTokenAddress, baseApy, rewardApy, totalApy };
+    return { address: vault.atvTokenAddress, baseApy, rewardApy, totalApy };
+  }
+
+  async getDepositStatus(address: string): Promise<VaultStatusResponse> {
+    const vault = await vaultRegistry.getVaultOrThrow(address);
+    try {
+      const isPaused = await ethersHelper.readContract<boolean>(
+        vault.contracts.base.address,
+        ["function depositPaused() view returns (bool)"],
+        "depositPaused",
+        [],
+        vault.chain,
+      );
+      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+    } catch {
+      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+    }
+  }
+
+  async getWithdrawStatus(address: string): Promise<VaultStatusResponse> {
+    const vault = await vaultRegistry.getVaultOrThrow(address);
+    try {
+      const isPaused = await ethersHelper.readContract<boolean>(
+        vault.contracts.base.address,
+        ["function withdrawPaused() view returns (bool)"],
+        "withdrawPaused",
+        [],
+        vault.chain,
+      );
+      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+    } catch {
+      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+    }
+  }
+
+  async getQueueWithdrawStatus(address: string): Promise<VaultStatusResponse> {
+    const vault = await vaultRegistry.getVaultOrThrow(address);
+    try {
+      const isPaused = await ethersHelper.readContract<boolean>(
+        vault.contracts.base.address,
+        ["function queueWithdrawPaused() view returns (bool)"],
+        "queueWithdrawPaused",
+        [],
+        vault.chain,
+      );
+      return { vaultAddress: vault.atvTokenAddress, isPaused, supported: true };
+    } catch {
+      return { vaultAddress: vault.atvTokenAddress, isPaused: false, supported: false };
+    }
   }
 }
 

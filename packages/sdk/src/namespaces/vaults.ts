@@ -25,7 +25,7 @@ export class VaultsNamespace {
 
     /**
      * Get the current NAV (Net Asset Value) for a vault.
-     * @param address — vault afiTokenAddress
+     * @param address — vault atvTokenAddress
      */
     async nav(address: string): Promise<NavResponse> {
         const { data } = await this.http.get<ApiResponse<NavResponse>>(
@@ -36,7 +36,7 @@ export class VaultsNamespace {
 
     /**
      * Get the current TVL (Total Value Locked) for a vault.
-     * @param address — vault afiTokenAddress
+     * @param address — vault atvTokenAddress
      */
     async tvl(address: string): Promise<TvlResponse> {
         const { data } = await this.http.get<ApiResponse<TvlResponse>>(
@@ -47,7 +47,7 @@ export class VaultsNamespace {
 
     /**
      * Get the current APY for a vault.
-     * @param address — vault afiTokenAddress
+     * @param address — vault atvTokenAddress
      */
     async apy(address: string): Promise<ApyResponse> {
         const { data } = await this.http.get<ApiResponse<ApyResponse>>(

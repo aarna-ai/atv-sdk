@@ -119,7 +119,7 @@ class CmsService {
   }
 
   /**
-   * Maps a single afi-products item to IAtvVault.
+   * Maps a single atv-products item to IAtvVault.
    * Returns null (with a warning) if required contracts are missing or chainId
    * is unsupported, so one bad item doesn't break the entire vault list.
    */
@@ -155,7 +155,7 @@ class CmsService {
     return {
       productId: item.productId as ProductId,
       label: item.title ?? item.productUsp,
-      afiTokenAddress: normaliseAddress(item.afiTokenAddress),
+      atvTokenAddress: normaliseAddress(item.afiTokenAddress),
       chain,
       productType: item.productType,
       timelockContractType: (item.timelockContractType?.toUpperCase() ??

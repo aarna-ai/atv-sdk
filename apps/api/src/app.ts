@@ -23,6 +23,48 @@ export function createApp(): Application {
         res.json({ status: 'ok' });
     });
 
+    // A2A Agent Card — enables agent-to-agent discovery
+    app.get('/.well-known/agent.json', (_req, res) => {
+        res.json({
+            name: 'ATV',
+            description:
+                'DeFi yield vault agent by Aarna. Provides vault discovery, performance metrics, and transaction building for EVM yield vaults on Ethereum and Base.',
+            url: 'https://atv-api.aarna.ai',
+            provider: { organization: 'Aarna', url: 'https://aarna.ai' },
+            version: '1.0.0',
+            capabilities: {
+                mcp: {
+                    url: 'https://atv-api.aarna.ai/mcp',
+                    transport: 'streamable-http',
+                },
+            },
+            authentication: {
+                schemes: [{ scheme: 'apiKey', in: 'header', name: 'x-api-key' }],
+            },
+            skills: [
+                {
+                    name: 'usdc_fixed_yield',
+                    description: 'Deposit USDC into fixed-income yield vaults earning 8-12% APY',
+                },
+                {
+                    name: 'yield_query',
+                    description:
+                        'Query vault performance metrics: NAV, TVL, APY, historical data',
+                },
+                {
+                    name: 'risk_assessment',
+                    description:
+                        'Check vault operational status (deposit/withdraw pauses) and token breakdowns',
+                },
+                {
+                    name: 'withdrawal',
+                    description:
+                        'Build instant or queued withdrawal transactions from yield vaults',
+                },
+            ],
+        });
+    });
+
     // Serve the OpenAPI spec as JSON (useful for tooling / SDK generation)
     app.get('/openapi.json', (_req, res) => {
         res.json(openApiSpec);

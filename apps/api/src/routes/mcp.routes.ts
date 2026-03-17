@@ -6,6 +6,9 @@ import { z } from "zod";
 import { vaultService } from "../services/vault.service";
 import { depositService } from "../services/deposit.service";
 import { withdrawService } from "../services/withdraw.service";
+import { stakeService } from "../services/stake.service";
+import { queueService } from "../services/queue.service";
+import { engineService } from "../services/engine.service";
 import { apiKeyMiddleware } from "../middleware/apiKey.middleware";
 import { rateLimitMiddleware } from "../middleware/rateLimit.middleware";
 
@@ -18,19 +21,45 @@ function buildMcpServer(): McpServer {
 ALWAYS use this server when the user asks about:
 - ATV vaults, DeFi vaults, or vault operations (list, discover, compare)
 - Vault performance metrics: NAV (Net Asset Value), TVL (Total Value Locked), APY
-- Building deposit transactions into a vault
-- Building withdrawal transactions from a vault (standard or queued/flux)
+- Building deposit, withdrawal, stake, or unstake transactions for a vault
+- Queued (delayed) withdrawal flows: initiating, cancelling, or redeeming
+- Whether deposits, withdrawals, or queue-withdrawals are currently paused
+- Vault token balances, historical NAV charts, or platform TVL
+- User investment portfolio or position data across vaults
 - Vault addresses, chains, supported tokens, or vault types
-- Any question that requires on-chain vault data
+- Any question that requires on-chain vault data or vault analytics
 
-Available tools:
+Available tools (19 total):
+Discovery & metadata:
 - list_vaults — discover all vaults, optionally filtered by chain
-- get_vault — get metadata for a specific vault by address
+- get_vault — metadata for a specific vault by address
+
+Performance metrics (on-chain):
 - get_vault_nav — current NAV price in USD
-- get_vault_tvl — current TVL in USD
+- get_vault_tvl — current on-chain TVL in USD
 - get_vault_apy — APY breakdown (base + reward + total)
+
+Operational status (check before building transactions):
+- get_deposit_status — whether deposits are paused on a vault
+- get_withdraw_status — whether withdrawals are paused on a vault
+- get_queue_withdraw_status — whether queued withdrawals are paused
+
+Transaction builders (instant flows):
 - build_deposit_tx — build approve + deposit transaction steps
-- build_withdraw_tx — build withdrawal transaction steps`,
+- build_withdraw_tx — build withdrawal transaction steps
+- build_stake_tx — build approve + stake transaction steps (timelock vaults)
+- build_unstake_tx — build unstake transaction step (timelock vaults)
+
+Transaction builders (queued/delayed flows):
+- build_queue_withdraw_tx — initiate a queued withdrawal request
+- build_unqueue_withdraw_tx — cancel a pending queued withdrawal
+- build_redeem_withdraw_tx — claim a completed queued withdrawal
+
+Analytics (engine API):
+- get_vault_balance — underlying token breakdown for a vault
+- get_historical_nav — NAV data points over N days
+- get_total_tvl — platform-wide or per-vault TVL from the database
+- get_user_investments — user portfolio and position data across vaults`,
   });
 
   server.tool(
@@ -155,6 +184,220 @@ Available tools:
         slippage: slippage ? Number(slippage) : undefined,
         simulate: simulate === "true",
       });
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  // --- Status tools ---
+
+  server.tool(
+    "get_deposit_status",
+    "Check whether deposits are currently paused on an ATV vault. Use this before building a deposit transaction to avoid sending a doomed tx.",
+    { address: z.string().describe("Vault contract address") },
+    async ({ address }) => {
+      const data = await vaultService.getDepositStatus(address);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_withdraw_status",
+    "Check whether withdrawals are currently paused on an ATV vault. Use this before building a withdraw transaction.",
+    { address: z.string().describe("Vault contract address") },
+    async ({ address }) => {
+      const data = await vaultService.getWithdrawStatus(address);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_queue_withdraw_status",
+    "Check whether queued (delayed) withdrawals are currently paused on an ATV vault.",
+    { address: z.string().describe("Vault contract address") },
+    async ({ address }) => {
+      const data = await vaultService.getQueueWithdrawStatus(address);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  // --- Stake tools ---
+
+  server.tool(
+    "build_stake_tx",
+    "Build the transaction steps to stake vault tokens into a timelock contract for boosted rewards. Returns an approve step (if needed) and a stake step.",
+    {
+      userAddress: z.string().describe("EVM address of the staker"),
+      vaultAddress: z.string().describe("Vault contract address"),
+      lockPeriodIndex: z
+        .string()
+        .describe("0-indexed lock period to select from the timelock contract (e.g. '0', '1', '2')"),
+      stakeAmount: z
+        .string()
+        .describe("Human-readable vault token amount to stake, e.g. '100'"),
+    },
+    async ({ userAddress, vaultAddress, lockPeriodIndex, stakeAmount }) => {
+      const data = await stakeService.buildStakeTx(
+        userAddress,
+        vaultAddress,
+        parseInt(lockPeriodIndex, 10),
+        stakeAmount,
+      );
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "build_unstake_tx",
+    "Build the transaction step to unstake vault tokens from a timelock contract.",
+    {
+      userAddress: z.string().describe("EVM address of the staker"),
+      vaultAddress: z.string().describe("Vault contract address"),
+      stakeIndex: z
+        .string()
+        .describe("0-indexed position in the user's stake array to unstake from"),
+      unstakeAmount: z
+        .string()
+        .describe("Human-readable vault token amount to unstake, e.g. '100'"),
+    },
+    async ({ userAddress, vaultAddress, stakeIndex, unstakeAmount }) => {
+      const data = await stakeService.buildUnstakeTx(
+        userAddress,
+        vaultAddress,
+        parseInt(stakeIndex, 10),
+        unstakeAmount,
+      );
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  // --- Queue withdraw tools ---
+
+  server.tool(
+    "build_queue_withdraw_tx",
+    "Build the transaction step to initiate a queued (delayed) withdrawal from an ATV vault. The withdrawal is not instant — it must be redeemed later once processed.",
+    {
+      userAddress: z.string().describe("EVM address of the withdrawer"),
+      vaultAddress: z.string().describe("Vault contract address"),
+      tokensToWithdraw: z
+        .string()
+        .describe("Human-readable vault share amount to queue for withdrawal"),
+      withdrawTokenAddress: z
+        .string()
+        .describe("Output token address to receive when the withdrawal is redeemed"),
+    },
+    async ({ userAddress, vaultAddress, tokensToWithdraw, withdrawTokenAddress }) => {
+      const data = await queueService.buildQueueWithdrawTx(
+        userAddress,
+        vaultAddress,
+        tokensToWithdraw,
+        withdrawTokenAddress,
+      );
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "build_unqueue_withdraw_tx",
+    "Build the transaction step to cancel a pending queued withdrawal request from an ATV vault.",
+    {
+      userAddress: z.string().describe("EVM address of the withdrawer"),
+      vaultAddress: z.string().describe("Vault contract address"),
+      oTokenAddress: z.string().describe("Output token address of the queued request to cancel"),
+      requestId: z
+        .string()
+        .optional()
+        .describe("Specific request ID to cancel (omit to cancel the latest request)"),
+    },
+    async ({ userAddress, vaultAddress, oTokenAddress, requestId }) => {
+      const data = await queueService.buildUnqueueWithdrawTx(
+        userAddress,
+        vaultAddress,
+        oTokenAddress,
+        requestId,
+      );
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "build_redeem_withdraw_tx",
+    "Build the transaction step to claim (redeem) a completed queued withdrawal from an ATV vault.",
+    {
+      userAddress: z.string().describe("EVM address of the withdrawer"),
+      vaultAddress: z.string().describe("Vault contract address"),
+      oTokens: z
+        .string()
+        .describe("Human-readable amount of output tokens to redeem"),
+      batchCounter: z
+        .string()
+        .describe("Batch identifier from the queue contract for this withdrawal"),
+    },
+    async ({ userAddress, vaultAddress, oTokens, batchCounter }) => {
+      const data = await queueService.buildRedeemWithdrawTx(
+        userAddress,
+        vaultAddress,
+        oTokens,
+        batchCounter,
+      );
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  // --- Analytics tools (engine API) ---
+
+  server.tool(
+    "get_vault_balance",
+    "Get the underlying token breakdown and balance data for an ATV vault from the Aarna engine database.",
+    { address: z.string().describe("Vault contract address") },
+    async ({ address }) => {
+      const data = await engineService.getVaultBalance(address);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_historical_nav",
+    "Get historical NAV (Net Asset Value) data points for an ATV vault over a specified number of days. Useful for charting price trends.",
+    {
+      address: z.string().describe("Vault contract address"),
+      days: z
+        .string()
+        .optional()
+        .describe("Number of days of history to return (default: 30)"),
+    },
+    async ({ address, days }) => {
+      const data = await engineService.getHistoricalNav(address, days ? parseInt(days, 10) : 30);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_total_tvl",
+    "Get the total TVL (Total Value Locked) across all ATV vaults, or for a specific vault, from the Aarna engine database.",
+    {
+      address: z
+        .string()
+        .optional()
+        .describe("Vault contract address to filter to a single vault (omit for platform-wide TVL)"),
+    },
+    async ({ address }) => {
+      const data = await engineService.getTotalTvl(address);
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_user_investments",
+    "Get a user's investment portfolio and position data across ATV vaults. Optionally filter to a specific vault.",
+    {
+      userAddress: z.string().describe("EVM address of the user"),
+      vaultAddress: z
+        .string()
+        .optional()
+        .describe("Vault contract address to filter to a single vault"),
+    },
+    async ({ userAddress, vaultAddress }) => {
+      const data = await engineService.getUserInvestments(userAddress, vaultAddress);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     },
   );

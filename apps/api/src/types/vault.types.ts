@@ -44,7 +44,7 @@ export interface IContractEntry {
 export interface IAtvVault {
   productId: ProductId;
   label: string;
-  afiTokenAddress: string;
+  atvTokenAddress: string;
   chain: EvmChain;
   productType: number;
   timelockContractType: TLContractType;

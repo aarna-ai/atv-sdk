@@ -1,0 +1,17 @@
+{
+  "name": "@aarna/agentkit-atv",
+  "version": "1.0.0",
+  "description": "Coinbase AgentKit action provider for ATV DeFi yield vaults",
+  "keywords": ["agentkit", "coinbase", "defi", "vault", "yield", "mcp", "aarna"],
+  "homepage": "https://github.com/aarna-ai/atv-sdk",
+  "repository": { "type": "git", "url": "https://github.com/aarna-ai/atv-sdk.git", "directory": "packages/agentkit-atv" },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js", "import": "./dist/index.mjs" } },
+  "files": ["dist"],
+  "scripts": { "build": "tsup src/index.ts --format cjs,esm --dts --clean" },
+  "dependencies": { "axios": "^1.6.0", "zod": "^3.22.0" },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.3.0" }
+}

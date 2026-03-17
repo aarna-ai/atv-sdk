@@ -70,17 +70,77 @@ export interface ApyResponse {
   totalApy: string; // baseApy + rewardApy, e.g. "21.16"
 }
 
+export interface VaultStatusResponse {
+  vaultAddress: string;
+  isPaused: boolean;
+  supported: boolean; // false when contract doesn't expose the status function
+}
+
+export interface StakeTxQuery {
+  userAddress: string;
+  vaultAddress: string;
+  lockPeriodIndex: string; // 0-indexed lock period from the timelock contract
+  stakeAmount: string; // human-readable vault token amount, e.g. "100"
+}
+
+export interface UnstakeTxQuery {
+  userAddress: string;
+  vaultAddress: string;
+  stakeIndex: string; // 0-indexed position in the user's stake array
+  unstakeAmount: string; // human-readable vault token amount
+}
+
+export interface QueueWithdrawTxQuery {
+  userAddress: string;
+  vaultAddress: string;
+  tokensToWithdraw: string; // human-readable share amount
+  withdrawTokenAddress: string; // output token to receive on redemption
+}
+
+export interface UnqueueWithdrawTxQuery {
+  userAddress: string;
+  vaultAddress: string;
+  oTokenAddress: string; // output token address of the queued request
+  requestId?: string; // optional specific request ID to cancel
+}
+
+export interface RedeemWithdrawTxQuery {
+  userAddress: string;
+  vaultAddress: string;
+  oTokens: string; // human-readable amount of output tokens to redeem
+  batchCounter: string; // batch identifier from the queue contract
+}
+
+export interface UserInvestmentsQuery {
+  userAddress: string;
+  vaultAddress?: string; // optional filter to a specific vault
+}
+
+export interface HistoricalNavQuery {
+  days?: string; // number of days of history, defaults to 30
+}
+
 /**
  * The role of a transaction step within a multi-step operation.
  *
- * approve  — ERC20 allowance grant; safe to skip if sufficient allowance exists
- * deposit  — transfers tokens into a vault
- * withdraw — redeems vault shares for an output token
+ * approve          — ERC20 allowance grant; safe to skip if sufficient allowance exists
+ * deposit          — transfers tokens into a vault
+ * withdraw         — redeems vault shares for an output token
+ * stake            — locks vault tokens in a timelock/staking contract
+ * unstake          — unlocks staked vault tokens
+ * queue_withdraw   — initiates a queued (delayed) withdrawal request
+ * unqueue_withdraw — cancels a pending queued withdrawal request
+ * redeem_withdraw  — claims a completed queued withdrawal
  */
 export enum TxStepType {
   Approve = "approve",
   Deposit = "deposit",
   Withdraw = "withdraw",
+  Stake = "stake",
+  Unstake = "unstake",
+  QueueWithdraw = "queue_withdraw",
+  UnqueueWithdraw = "unqueue_withdraw",
+  RedeemWithdraw = "redeem_withdraw",
 }
 
 /**

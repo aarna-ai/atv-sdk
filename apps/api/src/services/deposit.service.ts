@@ -29,7 +29,7 @@ export class DepositService {
    *
    * Deposit target and function signature vary by vault type:
    *   ERC4626 (non-atvPTmax) → timelock contract, deposit(uint256, address)
-   *   ERC20 / atvPTmax       → afiToken address,  deposit(uint256, address)
+   *   ERC20 / atvPTmax       → atvToken address,  deposit(uint256, address)
    */
   async buildDepositTx(
     userAddress: string,
@@ -117,7 +117,7 @@ export class DepositService {
 
     const depositTarget = isErc4626Timelock
       ? vault.contracts.timelock!.address
-      : vault.afiTokenAddress;
+      : vault.atvTokenAddress;
 
     // --- Guardrail 3: min deposit ---
     // Only called if the vault ABI exposes minimumDepositLimit().
@@ -224,7 +224,7 @@ export class DepositService {
         vault.chain.apiHex === EvmChain.BASE.apiHex ? [inputTokenAddress] : [];
 
       const minDepositLimit = await ethersHelper.readContract<bigint>(
-        vault.afiTokenAddress,
+        vault.atvTokenAddress,
         vaultAbi,
         "minimumDepositLimit",
         args,

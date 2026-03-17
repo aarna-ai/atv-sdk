@@ -20,41 +20,28 @@ COPY packages/sdk packages/sdk
 COPY pnpm-workspace.yaml package.json ./
 RUN pnpm --filter api build
 
-# ── Stage 3: Fetch secrets & Production image ──
-FROM node:20-slim AS runner
-RUN corepack enable && corepack prepare pnpm@10.30.2 --activate
-
-# Install awscli and jq to fetch secrets
-RUN apt-get update && apt-get install -y awscli jq && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Accept AWS credentials as build args
+# ── Stage 3: Fetch secrets (intermediate — discarded from final image) ──
+FROM amazon/aws-cli:latest AS secrets
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_DEFAULT_REGION
-
-# Set temporarily for aws cli to work during build
-ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-ENV AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-
-# Fetch secret from Secrets Manager and create .env
-RUN secrets_json=$(aws secretsmanager get-secret-value \
+RUN aws secretsmanager get-secret-value \
       --secret-id atv-sdk \
       --region us-east-1 \
       --output text \
-      --query SecretString) && \
-    if [ ! -z "$secrets_json" ]; then \
-      echo "$secrets_json" | jq -r 'to_entries | .[] | "\(.key)=\"\(.value | tostring)\""' > .env; \
-    fi
+      --query SecretString \
+    | python3 -c "import sys,json; [print(f'{k}=\"{v}\"') for k,v in json.loads(sys.stdin.read()).items()]" \
+    > /tmp/.env
 
-# Unset AWS credentials after fetching secrets.
-ENV AWS_ACCESS_KEY_ID=""
-ENV AWS_SECRET_ACCESS_KEY=""
-ENV AWS_DEFAULT_REGION=""
+# ── Stage 4: Production image (no AWS credentials) ──
+FROM node:20-slim AS runner
+RUN corepack enable && corepack prepare pnpm@10.30.2 --activate
+WORKDIR /app
 
-# Copy workspace config
+# Copy secrets from intermediate stage (AWS creds never touch this image)
+COPY --from=secrets /tmp/.env .env
+
+# Copy workspace config & install production deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
 COPY packages/sdk/package.json packages/sdk/

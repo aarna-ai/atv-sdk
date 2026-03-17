@@ -61,6 +61,48 @@ class EngineService {
       totalApy: (base + reward).toFixed(2),
     };
   }
+
+  /**
+   * GET /afi/vault-balance-data?vaultAddress=<address>
+   * Returns the underlying token breakdown for the vault.
+   */
+  async getVaultBalance(vaultAddress: string): Promise<unknown> {
+    return this.get("/afi/vault-balance-data", { vaultAddress });
+  }
+
+  /**
+   * GET /afi/user-investments?address=<addr>&vaultAddress=<addr>
+   * Returns user portfolio / position data, optionally filtered to one vault.
+   */
+  async getUserInvestments(
+    userAddress: string,
+    vaultAddress?: string,
+  ): Promise<unknown> {
+    const params: Record<string, string> = { address: userAddress };
+    if (vaultAddress) params.vaultAddress = vaultAddress;
+    return this.get("/afi/user-investments", params);
+  }
+
+  /**
+   * GET /afi/historical-nav-graph?vaultAddress=<addr>&days=<n>
+   * Returns NAV data points over the requested number of days.
+   */
+  async getHistoricalNav(vaultAddress: string, days: number): Promise<unknown> {
+    return this.get("/afi/historical-nav-graph", {
+      vaultAddress,
+      days: days.toString(),
+    });
+  }
+
+  /**
+   * GET /afi/total-tvl?vault_address=<addr>
+   * Returns platform-wide or per-vault TVL from the engine DB.
+   */
+  async getTotalTvl(vaultAddress?: string): Promise<unknown> {
+    const params: Record<string, string> = {};
+    if (vaultAddress) params.vault_address = vaultAddress;
+    return this.get("/afi/total-tvl", params);
+  }
 }
 
 export const engineService = new EngineService();

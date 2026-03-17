@@ -23,7 +23,7 @@ export class WithdrawService {
 
         // Fetch share token decimals to convert human-readable input to wei
         const shareDecimals = await ethersHelper.readContract<bigint>(
-            vault.afiTokenAddress,
+            vault.atvTokenAddress,
             ['function decimals() view returns (uint8)'],
             'decimals',
             [],

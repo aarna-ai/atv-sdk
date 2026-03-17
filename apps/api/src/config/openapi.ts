@@ -100,7 +100,7 @@ export const openApiSpec = {
           address: {
             type: "string",
             example: "0xabc123...",
-            description: "Vault token (afiToken) contract address",
+            description: "Vault token (atvToken) contract address",
           },
           chain: {
             type: "string",
@@ -193,6 +193,24 @@ export const openApiSpec = {
         },
         required: ["address", "baseApy", "rewardApy", "totalApy"],
       },
+      VaultStatusResponse: {
+        type: "object",
+        properties: {
+          vaultAddress: { type: "string", example: "0xabc123..." },
+          isPaused: {
+            type: "boolean",
+            example: false,
+            description: "Whether the operation is currently paused on-chain",
+          },
+          supported: {
+            type: "boolean",
+            example: true,
+            description:
+              "False when the vault contract does not expose the status function — treat as operational in that case",
+          },
+        },
+        required: ["vaultAddress", "isPaused", "supported"],
+      },
       TxStep: {
         type: "object",
         description:
@@ -212,13 +230,27 @@ export const openApiSpec = {
           },
           type: {
             type: "string",
-            enum: ["approve", "deposit", "withdraw"],
+            enum: [
+              "approve",
+              "deposit",
+              "withdraw",
+              "stake",
+              "unstake",
+              "queue_withdraw",
+              "unqueue_withdraw",
+              "redeem_withdraw",
+            ],
             example: "approve",
             description:
               "Transaction step type (enum `TxStepType`):\n\n" +
-              "- `approve` — ERC20 allowance grant. Safe to skip if the user already has sufficient allowance on the deposit token.\n" +
-              "- `deposit` — Transfers tokens into the vault. Must be sent after `approve`.\n" +
-              "- `withdraw` — Redeems vault shares for an output token.",
+              "- `approve` — ERC20 allowance grant. Safe to skip if sufficient allowance exists.\n" +
+              "- `deposit` — Transfers tokens into the vault.\n" +
+              "- `withdraw` — Redeems vault shares for an output token.\n" +
+              "- `stake` — Locks vault tokens in a timelock contract.\n" +
+              "- `unstake` — Unlocks staked vault tokens.\n" +
+              "- `queue_withdraw` — Initiates a queued (delayed) withdrawal.\n" +
+              "- `unqueue_withdraw` — Cancels a pending queued withdrawal.\n" +
+              "- `redeem_withdraw` — Claims a completed queued withdrawal.",
           },
           to: {
             type: "string",
@@ -354,7 +386,7 @@ export const openApiSpec = {
         name: "address",
         in: "path",
         required: true,
-        description: "Vault token (afiToken) contract address",
+        description: "Vault token (atvToken) contract address",
         schema: { type: "string", example: "0xabc123..." },
       },
     },
@@ -548,6 +580,203 @@ export const openApiSpec = {
       },
     },
 
+    "/v1/vaults/tvl": {
+      get: {
+        summary: "Get platform TVL",
+        description:
+          "Returns the total TVL across all vaults, or for a specific vault, sourced from the Aarna engine database.",
+        operationId: "getTotalTvl",
+        tags: ["Analytics"],
+        parameters: [
+          {
+            name: "address",
+            in: "query",
+            required: false,
+            description: "Filter to a specific vault address (omit for platform-wide total)",
+            schema: { type: "string", example: "0xabc123..." },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "TVL data",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/deposit-status": {
+      get: {
+        summary: "Get deposit status",
+        description: "Check whether deposits are currently paused on a vault. Use this before building a deposit transaction.",
+        operationId: "getDepositStatus",
+        tags: ["Status"],
+        parameters: [{ $ref: "#/components/parameters/VaultAddress" }],
+        responses: {
+          "200": {
+            description: "Deposit status",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VaultStatusResponse" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/withdraw-status": {
+      get: {
+        summary: "Get withdraw status",
+        description: "Check whether withdrawals are currently paused on a vault.",
+        operationId: "getWithdrawStatus",
+        tags: ["Status"],
+        parameters: [{ $ref: "#/components/parameters/VaultAddress" }],
+        responses: {
+          "200": {
+            description: "Withdraw status",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VaultStatusResponse" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/queue-withdraw-status": {
+      get: {
+        summary: "Get queue-withdraw status",
+        description: "Check whether queued (delayed) withdrawals are currently paused on a vault.",
+        operationId: "getQueueWithdrawStatus",
+        tags: ["Status"],
+        parameters: [{ $ref: "#/components/parameters/VaultAddress" }],
+        responses: {
+          "200": {
+            description: "Queue withdraw status",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { $ref: "#/components/schemas/VaultStatusResponse" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/balance": {
+      get: {
+        summary: "Get vault balance",
+        description: "Returns the underlying token breakdown and balance data for a vault from the Aarna engine database.",
+        operationId: "getVaultBalance",
+        tags: ["Analytics"],
+        parameters: [{ $ref: "#/components/parameters/VaultAddress" }],
+        responses: {
+          "200": {
+            description: "Vault balance data",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/historical-nav": {
+      get: {
+        summary: "Get historical NAV",
+        description: "Returns historical NAV data points for a vault over a specified number of days.",
+        operationId: "getHistoricalNav",
+        tags: ["Analytics"],
+        parameters: [
+          { $ref: "#/components/parameters/VaultAddress" },
+          {
+            name: "days",
+            in: "query",
+            required: false,
+            description: "Number of days of history to return (default: 30)",
+            schema: { type: "integer", example: 30, default: 30 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Historical NAV data",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
     "/v1/deposit-tx": {
       get: {
         summary: "Build deposit transaction",
@@ -567,7 +796,7 @@ export const openApiSpec = {
             name: "vaultAddress",
             in: "query",
             required: true,
-            description: "Vault token (afiToken) address to deposit into",
+            description: "Vault token (atvToken) address to deposit into",
             schema: { type: "string", example: "0xVaultAddress..." },
           },
           {
@@ -696,6 +925,343 @@ export const openApiSpec = {
         },
       },
     },
+
+    "/v1/stake-tx": {
+      get: {
+        summary: "Build stake transaction",
+        description:
+          "Returns an ordered array of `TxStep` objects to stake vault tokens into a timelock contract. Pre-flight checks: vault must support staking, user must have sufficient vault token balance.\n\nResponse is 1–2 steps:\n- 1 step → stake only (allowance sufficient)\n- 2 steps → approve then stake",
+        operationId: "buildStakeTx",
+        tags: ["Staking"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+          {
+            name: "lockPeriodIndex",
+            in: "query",
+            required: true,
+            description: "0-indexed lock period from the timelock contract (e.g. 0, 1, 2)",
+            schema: { type: "integer", example: 0 },
+          },
+          {
+            name: "stakeAmount",
+            in: "query",
+            required: true,
+            description: 'Human-readable vault token amount to stake (e.g. "100")',
+            schema: { type: "string", example: "100" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Ordered stake steps (approve → stake)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { $ref: "#/components/schemas/TxStep" } },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/unstake-tx": {
+      get: {
+        summary: "Build unstake transaction",
+        description: "Returns a `TxStep` to unstake vault tokens from a timelock contract.",
+        operationId: "buildUnstakeTx",
+        tags: ["Staking"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+          {
+            name: "stakeIndex",
+            in: "query",
+            required: true,
+            description: "0-indexed position in the user's stake array",
+            schema: { type: "integer", example: 0 },
+          },
+          {
+            name: "unstakeAmount",
+            in: "query",
+            required: true,
+            description: 'Human-readable vault token amount to unstake (e.g. "100")',
+            schema: { type: "string", example: "100" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Unstake transaction step",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { $ref: "#/components/schemas/TxStep" } },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/queue-withdraw-tx": {
+      get: {
+        summary: "Build queue-withdraw transaction",
+        description:
+          "Initiates a queued (delayed) withdrawal. The withdrawal must be redeemed separately once it is processed by the vault. Only available on vaults with `STANDARD` or `STANDARD_AUTO_REDEEM` withdraw type.",
+        operationId: "buildQueueWithdrawTx",
+        tags: ["Queued Withdrawals"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+          {
+            name: "tokensToWithdraw",
+            in: "query",
+            required: true,
+            description: 'Human-readable vault share amount to queue for withdrawal (e.g. "100")',
+            schema: { type: "string", example: "100" },
+          },
+          {
+            name: "withdrawTokenAddress",
+            in: "query",
+            required: true,
+            description: "Output token address to receive when the withdrawal is redeemed",
+            schema: { type: "string", example: "0xUSDCAddress..." },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Queue withdraw transaction step",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { $ref: "#/components/schemas/TxStep" } },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/unqueue-withdraw-tx": {
+      get: {
+        summary: "Build unqueue-withdraw transaction",
+        description: "Cancels a pending queued withdrawal request.",
+        operationId: "buildUnqueueWithdrawTx",
+        tags: ["Queued Withdrawals"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+          {
+            name: "oTokenAddress",
+            in: "query",
+            required: true,
+            description: "Output token address of the queued request to cancel",
+            schema: { type: "string", example: "0xUSDCAddress..." },
+          },
+          {
+            name: "requestId",
+            in: "query",
+            required: false,
+            description: "Specific request ID to cancel (omit to cancel the latest request)",
+            schema: { type: "string", example: "1" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Unqueue withdraw transaction step",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { $ref: "#/components/schemas/TxStep" } },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/redeem-withdraw-tx": {
+      get: {
+        summary: "Build redeem-withdraw transaction",
+        description: "Claims (redeems) a completed queued withdrawal from a vault.",
+        operationId: "buildRedeemWithdrawTx",
+        tags: ["Queued Withdrawals"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: true,
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+          {
+            name: "oTokens",
+            in: "query",
+            required: true,
+            description: 'Human-readable amount of output tokens to redeem (e.g. "100")',
+            schema: { type: "string", example: "100" },
+          },
+          {
+            name: "batchCounter",
+            in: "query",
+            required: true,
+            description: "Batch identifier from the queue contract for this withdrawal",
+            schema: { type: "string", example: "1" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Redeem withdraw transaction step",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "array", items: { $ref: "#/components/schemas/TxStep" } },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/user-investments": {
+      get: {
+        summary: "Get user investments",
+        description: "Returns a user's portfolio and position data across ATV vaults from the Aarna engine database.",
+        operationId: "getUserInvestments",
+        tags: ["Analytics"],
+        parameters: [
+          {
+            name: "userAddress",
+            in: "query",
+            required: true,
+            description: "EVM address of the user",
+            schema: { type: "string", example: "0xUserAddress..." },
+          },
+          {
+            name: "vaultAddress",
+            in: "query",
+            required: false,
+            description: "Filter to a specific vault (omit for all vaults)",
+            schema: { type: "string", example: "0xVaultAddress..." },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User investment data",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: { type: "object" },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
   },
 
   tags: [
@@ -704,9 +1270,24 @@ export const openApiSpec = {
       description: "Read vault metadata, NAV, TVL, and APY",
     },
     {
+      name: "Status",
+      description: "Check whether vault operations (deposit, withdraw, queue-withdraw) are paused",
+    },
+    {
       name: "Transactions",
-      description:
-        "Build ready-to-send transaction calldata for deposits and withdrawals",
+      description: "Build ready-to-send transaction calldata for deposits and withdrawals",
+    },
+    {
+      name: "Staking",
+      description: "Build stake and unstake transaction calldata for timelock vaults",
+    },
+    {
+      name: "Queued Withdrawals",
+      description: "Build queue, unqueue, and redeem transaction calldata for delayed withdrawals",
+    },
+    {
+      name: "Analytics",
+      description: "Vault balances, historical NAV charts, TVL, and user investment data",
     },
   ],
 };

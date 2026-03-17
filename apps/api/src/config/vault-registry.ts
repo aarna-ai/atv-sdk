@@ -27,17 +27,17 @@ class VaultRegistry {
   }
 
   /**
-   * Returns a map of lowercase afiTokenAddress → IAtvVault for O(1) lookup.
+   * Returns a map of lowercase atvTokenAddress → IAtvVault for O(1) lookup.
    */
   async getVaultMap(): Promise<Record<string, IAtvVault>> {
     const vaults = await this.getVaults();
     return Object.fromEntries(
-      vaults.map((v) => [v.afiTokenAddress.toLowerCase(), v]),
+      vaults.map((v) => [v.atvTokenAddress.toLowerCase(), v]),
     );
   }
 
   /**
-   * Looks up a vault by its afiTokenAddress.
+   * Looks up a vault by its atvTokenAddress.
    * Throws a 404 ApiError if not found (or not in the allowlist).
    */
   async getVaultOrThrow(address: string): Promise<IAtvVault> {

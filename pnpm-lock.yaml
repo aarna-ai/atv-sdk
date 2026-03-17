@@ -73,6 +73,47 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  packages/agentkit-atv:
+    dependencies:
+      axios:
+        specifier: ^1.6.0
+        version: 1.13.5
+      zod:
+        specifier: ^3.22.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
+  packages/goat-plugin-atv:
+    dependencies:
+      axios:
+        specifier: ^1.6.0
+        version: 1.13.5
+      zod:
+        specifier: ^3.22.0
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
+  packages/mcp-server:
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(typescript@5.9.3)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
   packages/sdk:
     dependencies:
       axios:

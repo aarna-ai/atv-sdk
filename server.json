@@ -1,0 +1,35 @@
+{
+  "name": "atv",
+  "display_name": "ATV — DeFi Yield Vaults",
+  "description": "AI-native access to Aarna's tokenized DeFi yield vaults. Query vault performance (NAV, TVL, APY), build deposit/withdraw/stake transactions, and track portfolio positions across Ethereum and Base.",
+  "vendor": "Aarna",
+  "homepage": "https://aarna.ai",
+  "repository": "https://github.com/aarna-ai/atv-sdk",
+  "license": "MIT",
+  "transport": {
+    "type": "streamable-http",
+    "url": "https://atv-api.aarna.ai/mcp",
+    "authentication": {
+      "type": "header",
+      "header_name": "x-api-key"
+    }
+  },
+  "tools_count": 19,
+  "categories": ["defi", "finance", "blockchain"],
+  "tags": [
+    "yield",
+    "vault",
+    "ethereum",
+    "base",
+    "usdc",
+    "pendle",
+    "erc-4626",
+    "deposit",
+    "withdraw",
+    "apy",
+    "tvl",
+    "nav",
+    "mcp",
+    "ai-agent"
+  ]
+}
