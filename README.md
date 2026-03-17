@@ -1,6 +1,6 @@
 # ATV — DeFi Yield Vault MCP Server
 
-AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 19 tools for vault discovery, performance metrics, transaction building, and portfolio tracking.
+AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 19 tools for vault discovery, performance metrics, transaction building, and portfolio tracking..
 
 **MCP Endpoint:** `https://atv-api.aarna.ai/mcp` (Streamable HTTP)
 
