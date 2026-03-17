@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.aarna-ai/atv",
-  "description": "AI-native access to Aarna's tokenized DeFi yield vaults. Query vault performance (NAV, TVL, APY), build deposit/withdraw/stake transactions, and track portfolio positions across Ethereum and Base.",
+  "description": "Access Aarna's DeFi yield vaults — query NAV/TVL/APY, build transactions, track portfolios.",
   "repository": {
     "url": "https://github.com/aarna-ai/atv-sdk",
     "source": "github"
