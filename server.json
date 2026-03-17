@@ -1,35 +1,30 @@
 {
-  "name": "atv",
-  "display_name": "ATV — DeFi Yield Vaults",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aarna-ai/atv",
   "description": "AI-native access to Aarna's tokenized DeFi yield vaults. Query vault performance (NAV, TVL, APY), build deposit/withdraw/stake transactions, and track portfolio positions across Ethereum and Base.",
-  "vendor": "Aarna",
-  "homepage": "https://aarna.ai",
-  "repository": "https://github.com/aarna-ai/atv-sdk",
-  "license": "MIT",
-  "transport": {
-    "type": "streamable-http",
-    "url": "https://atv-api.aarna.ai/mcp",
-    "authentication": {
-      "type": "header",
-      "header_name": "x-api-key"
-    }
+  "repository": {
+    "url": "https://github.com/aarna-ai/atv-sdk",
+    "source": "github"
   },
-  "tools_count": 19,
-  "categories": ["defi", "finance", "blockchain"],
-  "tags": [
-    "yield",
-    "vault",
-    "ethereum",
-    "base",
-    "usdc",
-    "pendle",
-    "erc-4626",
-    "deposit",
-    "withdraw",
-    "apy",
-    "tvl",
-    "nav",
-    "mcp",
-    "ai-agent"
+  "version": "1.0.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@aarna-ai/mcp-server-atv",
+      "version": "1.0.1",
+      "transport": {
+        "type": "streamable-http",
+        "url": "https://atv-api.aarna.ai/mcp"
+      },
+      "environmentVariables": [
+        {
+          "description": "API key for authenticating with the ATV API",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "ATV_API_KEY"
+        }
+      ]
+    }
   ]
 }

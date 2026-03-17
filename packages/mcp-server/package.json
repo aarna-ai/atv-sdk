@@ -1,6 +1,7 @@
 {
   "name": "@aarna-ai/mcp-server-atv",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "mcpName": "io.github.aarna-ai/atv",
   "description": "MCP server connector for ATV — AI-native access to Aarna's DeFi yield vaults on Ethereum and Base",
   "keywords": [
     "mcp",
