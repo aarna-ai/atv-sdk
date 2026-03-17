@@ -1,5 +1,5 @@
 {
-  "name": "@aarna/agentkit-atv",
+  "name": "@aarna-ai/agentkit-atv",
   "version": "1.0.0",
   "description": "Coinbase AgentKit action provider for ATV DeFi yield vaults",
   "keywords": ["agentkit", "coinbase", "defi", "vault", "yield", "mcp", "aarna"],

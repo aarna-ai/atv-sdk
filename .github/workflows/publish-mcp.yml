@@ -1,4 +1,4 @@
-name: Publish @aarna/mcp-server-atv
+name: Publish @aarna-ai/mcp-server-atv
 
 on:
   push:
@@ -26,9 +26,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build package
-        run: pnpm --filter @aarna/mcp-server-atv build
+        run: pnpm --filter @aarna-ai/mcp-server-atv build
 
       - name: Publish to npm
-        run: pnpm --filter @aarna/mcp-server-atv publish --access public --no-git-checks
+        run: pnpm --filter @aarna-ai/mcp-server-atv publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

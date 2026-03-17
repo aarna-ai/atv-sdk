@@ -1,4 +1,4 @@
-# @aarna/mcp-server-atv
+# @aarna-ai/mcp-server-atv
 
 MCP server connector for **ATV** — AI-native access to Aarna's tokenized DeFi yield vaults on Ethereum and Base.
 
@@ -109,7 +109,7 @@ Add to `.vscode/settings.json`:
 ## Programmatic Usage
 
 ```ts
-import { mcpConfig, TOOLS, MCP_SERVER_URL } from '@aarna/mcp-server-atv';
+import { mcpConfig, TOOLS, MCP_SERVER_URL } from '@aarna-ai/mcp-server-atv';
 
 // Generate config for any MCP client
 const config = mcpConfig('your-api-key');

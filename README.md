@@ -231,7 +231,7 @@ API: `http://localhost:3000` | Docs: `http://localhost:3000/docs`
 atv-sdk/
 ├── apps/api/              # Express API server + MCP server
 ├── packages/sdk/          # TypeScript SDK (@atv/sdk)
-├── packages/mcp-server/   # npm connector package (@aarna/mcp-server-atv)
+├── packages/mcp-server/   # npm connector package (@aarna-ai/mcp-server-atv)
 ├── server.json            # MCP registry manifest
 └── docs/                  # Guides
 ```

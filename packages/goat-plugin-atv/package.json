@@ -1,5 +1,5 @@
 {
-  "name": "@aarna/goat-plugin-atv",
+  "name": "@aarna-ai/goat-plugin-atv",
   "version": "1.0.0",
   "description": "GOAT SDK plugin for ATV DeFi yield vaults",
   "keywords": ["goat-sdk", "defi", "vault", "yield", "mcp", "aarna", "plugin"],
