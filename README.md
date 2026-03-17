@@ -2,11 +2,19 @@
 
 AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 19 tools for vault discovery, performance metrics, transaction building, and portfolio tracking..
 
+**API Base URL:** `https://atv-api.aarna.ai`
 **MCP Endpoint:** `https://atv-api.aarna.ai/mcp` (Streamable HTTP)
+**API Docs:** `https://atv-api.aarna.ai/docs`
+
+## API Access
+
+The hosted API at `https://atv-api.aarna.ai` is available to anyone with a valid API key. All requests require an `x-api-key` header.
+
+To get an API key, reach out to us at **dev@aarnalab.dev**.
 
 ## Quick Start (30 seconds)
 
-Get an API key (see [Customer Onboarding](docs/customer-onboarding.md)), then add the config to your client:
+Once you have your API key, add the config to your client:
 
 ### Claude Desktop
 
