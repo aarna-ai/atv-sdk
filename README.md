@@ -1,6 +1,11 @@
 # ATV — DeFi Yield Vault MCP Server
 
+[![npm version](https://img.shields.io/npm/v/@aarna-ai/mcp-server-atv)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
 [![smithery badge](https://smithery.ai/badge/aarna-ai/atv)](https://smithery.ai/servers/aarna-ai/atv)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.aarna--ai%2Fatv-blue)](https://registry.modelcontextprotocol.io/servers/io.github.aarna-ai/atv)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![GitHub](https://img.shields.io/github/stars/aarna-ai/atv-sdk?style=social)](https://github.com/aarna-ai/atv-sdk)
 
 AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 19 tools for vault discovery, performance metrics, transaction building, and portfolio tracking.
 
