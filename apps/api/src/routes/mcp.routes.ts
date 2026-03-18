@@ -407,10 +407,32 @@ Analytics (engine API):
 
 export const mcpRouter: IRouter = Router();
 
-mcpRouter.use(apiKeyMiddleware);
-mcpRouter.use(rateLimitMiddleware);
+// Allow unauthenticated initialize + tools/list so registries (Smithery, etc.)
+// can discover available tools. Actual tool *execution* still requires an API key.
+function isDiscoveryRequest(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const msg = body as Record<string, unknown>;
+  const method = msg.method as string | undefined;
+  return method === "initialize" || method === "notifications/initialized" || method === "tools/list";
+}
 
 mcpRouter.all("/", async (req, res) => {
+  // Apply auth + rate limiting for non-discovery requests only
+  if (!isDiscoveryRequest(req.body)) {
+    return new Promise<void>((resolve) => {
+      apiKeyMiddleware(req, res, () => {
+        rateLimitMiddleware(req, res, async () => {
+          await handleMcpRequest(req, res);
+          resolve();
+        });
+      });
+    });
+  }
+
+  await handleMcpRequest(req, res);
+});
+
+async function handleMcpRequest(req: import("express").Request, res: import("express").Response) {
   const server = buildMcpServer();
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless
@@ -423,4 +445,4 @@ mcpRouter.all("/", async (req, res) => {
 
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
-});
+}
