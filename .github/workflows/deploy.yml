@@ -13,6 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ── Open port 22 for all IPs ───────────────────────────────
+      - name: Open port 22 for all IPs
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"inbound_rules":[{"protocol":"tcp","ports":"22","sources":{"addresses":["0.0.0.0/0"]}}]}' \
+            "https://api.digitalocean.com/v2/firewalls/${{ secrets.DO_FIREWALL_ID }}/rules"
+          sleep 10
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -33,7 +43,6 @@ jobs:
             --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             --build-arg AWS_DEFAULT_REGION=us-east-1 \
             -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest .
-
           docker push \
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest
 
@@ -47,18 +56,24 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} | \
               docker login --username AWS --password-stdin \
               ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com
-
             docker pull \
               ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest
-
             docker stop atv-sdk1 || true
             docker rm atv-sdk1 || true
-
             docker run -d \
               -p 3000:3000 \
               --name atv-sdk1 \
               -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
               --restart unless-stopped \
               ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/${{ secrets.AWS_REPO }}:latest
+            docker image prune -f
 
-            docker image prune -f  
+      # ── Remove open port 22 rule ───────────────────────────────
+      - name: Close port 22 for all IPs
+        if: always()
+        run: |
+          curl -s -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"inbound_rules":[{"protocol":"tcp","ports":"22","sources":{"addresses":["0.0.0.0/0"]}}]}' \
+            "https://api.digitalocean.com/v2/firewalls/${{ secrets.DO_FIREWALL_ID }}/rules"
