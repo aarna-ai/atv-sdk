@@ -15,7 +15,9 @@ import { rateLimitMiddleware } from "../middleware/rateLimit.middleware";
 function buildMcpServer(): McpServer {
   const server = new McpServer({
     name: "atv",
-    version: "1.0.0",
+    version: "1.0.1",
+    description: "Access Aarna's DeFi yield vaults — query NAV/TVL/APY, build deposit/withdraw transactions, track portfolios.",
+    homepage: "https://github.com/aarna-ai/atv-sdk",
     instructions: `You are connected to the ATV (Aarna Tokenized Vault) SDK server.
 
 ALWAYS use this server when the user asks about:
@@ -75,6 +77,7 @@ Analytics (engine API):
         .optional()
         .describe("EVM address to include token balances for each deposit token"),
     },
+    { annotations: { title: "List Vaults", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ chain, userAddress }) => {
       const data = await vaultService.listVaults({ chain, userAddress });
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -91,6 +94,7 @@ Analytics (engine API):
         .optional()
         .describe("EVM address to include token balances for"),
     },
+    { annotations: { title: "Get Vault", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address, userAddress }) => {
       const data = await vaultService.getVault(address, userAddress);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -101,6 +105,7 @@ Analytics (engine API):
     "get_vault_nav",
     "Get the current Net Asset Value (NAV) of an ATV vault in USD.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Vault NAV", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getNAV(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -111,6 +116,7 @@ Analytics (engine API):
     "get_vault_tvl",
     "Get the current Total Value Locked (TVL) of an ATV vault in USD.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Vault TVL", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getTVL(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -121,6 +127,7 @@ Analytics (engine API):
     "get_vault_apy",
     "Get the current APY breakdown (base + reward + total) for an ATV vault.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Vault APY", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getAPY(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -138,6 +145,7 @@ Analytics (engine API):
         .string()
         .describe("Human-readable deposit amount, e.g. '100' for 100 USDC"),
     },
+    { annotations: { title: "Build Deposit Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, depositTokenAddress, depositAmount }) => {
       const data = await depositService.buildDepositTx(
         userAddress,
@@ -168,6 +176,7 @@ Analytics (engine API):
         .optional()
         .describe("Pass 'true' to include a gas estimate in the response"),
     },
+    { annotations: { title: "Build Withdraw Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({
       userAddress,
       vaultAddress,
@@ -194,6 +203,7 @@ Analytics (engine API):
     "get_deposit_status",
     "Check whether deposits are currently paused on an ATV vault. Use this before building a deposit transaction to avoid sending a doomed tx.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Deposit Status", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getDepositStatus(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -204,6 +214,7 @@ Analytics (engine API):
     "get_withdraw_status",
     "Check whether withdrawals are currently paused on an ATV vault. Use this before building a withdraw transaction.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Withdraw Status", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getWithdrawStatus(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -214,6 +225,7 @@ Analytics (engine API):
     "get_queue_withdraw_status",
     "Check whether queued (delayed) withdrawals are currently paused on an ATV vault.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Queue Withdraw Status", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await vaultService.getQueueWithdrawStatus(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -235,6 +247,7 @@ Analytics (engine API):
         .string()
         .describe("Human-readable vault token amount to stake, e.g. '100'"),
     },
+    { annotations: { title: "Build Stake Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, lockPeriodIndex, stakeAmount }) => {
       const data = await stakeService.buildStakeTx(
         userAddress,
@@ -259,6 +272,7 @@ Analytics (engine API):
         .string()
         .describe("Human-readable vault token amount to unstake, e.g. '100'"),
     },
+    { annotations: { title: "Build Unstake Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, stakeIndex, unstakeAmount }) => {
       const data = await stakeService.buildUnstakeTx(
         userAddress,
@@ -285,6 +299,7 @@ Analytics (engine API):
         .string()
         .describe("Output token address to receive when the withdrawal is redeemed"),
     },
+    { annotations: { title: "Build Queue Withdraw Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, tokensToWithdraw, withdrawTokenAddress }) => {
       const data = await queueService.buildQueueWithdrawTx(
         userAddress,
@@ -308,6 +323,7 @@ Analytics (engine API):
         .optional()
         .describe("Specific request ID to cancel (omit to cancel the latest request)"),
     },
+    { annotations: { title: "Build Unqueue Withdraw Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, oTokenAddress, requestId }) => {
       const data = await queueService.buildUnqueueWithdrawTx(
         userAddress,
@@ -332,6 +348,7 @@ Analytics (engine API):
         .string()
         .describe("Batch identifier from the queue contract for this withdrawal"),
     },
+    { annotations: { title: "Build Redeem Withdraw Transaction", readOnlyHint: false, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress, oTokens, batchCounter }) => {
       const data = await queueService.buildRedeemWithdrawTx(
         userAddress,
@@ -349,6 +366,7 @@ Analytics (engine API):
     "get_vault_balance",
     "Get the underlying token breakdown and balance data for an ATV vault from the Aarna engine database.",
     { address: z.string().describe("Vault contract address") },
+    { annotations: { title: "Get Vault Balance", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await engineService.getVaultBalance(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -365,6 +383,7 @@ Analytics (engine API):
         .optional()
         .describe("Number of days of history to return (default: 30)"),
     },
+    { annotations: { title: "Get Historical NAV", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address, days }) => {
       const data = await engineService.getHistoricalNav(address, days ? parseInt(days, 10) : 30);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -380,6 +399,7 @@ Analytics (engine API):
         .optional()
         .describe("Vault contract address to filter to a single vault (omit for platform-wide TVL)"),
     },
+    { annotations: { title: "Get Total TVL", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
       const data = await engineService.getTotalTvl(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -396,10 +416,26 @@ Analytics (engine API):
         .optional()
         .describe("Vault contract address to filter to a single vault"),
     },
+    { annotations: { title: "Get User Investments", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress }) => {
       const data = await engineService.getUserInvestments(userAddress, vaultAddress);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     },
+  );
+
+  server.prompt(
+    "vault_overview",
+    "Get a comprehensive overview of all available ATV vaults with key metrics",
+    {},
+    async () => ({
+      messages: [{
+        role: "user",
+        content: {
+          type: "text",
+          text: "Please list all available ATV vaults and for each one, show the current NAV price, TVL, and APY. Present the results in a clear table format."
+        }
+      }]
+    })
   );
 
   return server;
@@ -413,7 +449,7 @@ function isDiscoveryRequest(body: unknown): boolean {
   if (!body || typeof body !== "object") return false;
   const msg = body as Record<string, unknown>;
   const method = msg.method as string | undefined;
-  return method === "initialize" || method === "notifications/initialized" || method === "tools/list";
+  return method === "initialize" || method === "notifications/initialized" || method === "tools/list" || method === "prompts/list";
 }
 
 mcpRouter.all("/", async (req, res) => {
