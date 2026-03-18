@@ -47,7 +47,7 @@ COPY apps/api/package.json apps/api/
 COPY packages/sdk/package.json packages/sdk/
 RUN pnpm install --frozen-lockfile --prod
 
-# Copy compiled output
+# Copy compiled output.
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY apps/api/migrations apps/api/migrations
 
