@@ -4,14 +4,14 @@
 startCommand:
   type: http
   url: https://atv-api.aarna.ai/mcp
-
-configSchema:
-  type: object
-  properties:
-    ATV_API_KEY:
-      type: string
-      title: API Key
-      description: API key for authenticating with the ATV API. Get one at https://aarna.ai
-      x-from: header
-  required:
-    - ATV_API_KEY
+  configSchema:
+    type: object
+    required:
+      - ATV_API_KEY
+    properties:
+      ATV_API_KEY:
+        type: string
+        title: API Key
+        description: API key for authenticating with the ATV API. Get one at https://aarna.ai
+        x-from:
+          header: x-api-key

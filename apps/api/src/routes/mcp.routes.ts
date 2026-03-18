@@ -16,8 +16,9 @@ function buildMcpServer(): McpServer {
   const server = new McpServer({
     name: "atv",
     version: "1.0.1",
+    title: "ATV - Aarna Tokenized Vaults",
     description: "Access Aarna's DeFi yield vaults — query NAV/TVL/APY, build deposit/withdraw transactions, track portfolios.",
-    homepage: "https://github.com/aarna-ai/atv-sdk",
+    websiteUrl: "https://github.com/aarna-ai/atv-sdk",
     instructions: `You are connected to the ATV (Aarna Tokenized Vault) SDK server.
 
 ALWAYS use this server when the user asks about:
