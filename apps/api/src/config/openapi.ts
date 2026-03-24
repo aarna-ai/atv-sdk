@@ -584,18 +584,10 @@ export const openApiSpec = {
       get: {
         summary: "Get platform TVL",
         description:
-          "Returns the total TVL across all vaults, or for a specific vault, sourced from the Aarna engine database.",
+          "Returns the total TVL across all vaults, sourced from the Aarna engine database.",
         operationId: "getTotalTvl",
         tags: ["Analytics"],
-        parameters: [
-          {
-            name: "address",
-            in: "query",
-            required: false,
-            description: "Filter to a specific vault address (omit for platform-wide total)",
-            schema: { type: "string", example: "0xabc123..." },
-          },
-        ],
+        parameters: [],
         responses: {
           "200": {
             description: "TVL data",

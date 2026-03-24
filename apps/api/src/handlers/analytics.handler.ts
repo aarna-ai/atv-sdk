@@ -4,12 +4,12 @@ import { UserInvestmentsQuery } from '../types/api.types';
 
 export const analyticsHandler = {
     getTotalTvl: async (
-        req: Request<{}, {}, {}, { address?: string }>,
+        req: Request,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const data = await engineService.getTotalTvl(req.query.address);
+            const data = await engineService.getTotalTvl();
             res.json({ data, message: 'Total TVL retrieved', statusCode: 200 });
         } catch (err) {
             next(err);

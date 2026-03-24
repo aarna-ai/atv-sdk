@@ -409,16 +409,11 @@ Analytics (engine API):
 
   server.tool(
     "get_total_tvl",
-    "Get the total TVL (Total Value Locked) across all ATV vaults, or for a specific vault, from the Aarna engine database.",
-    {
-      address: z
-        .string()
-        .optional()
-        .describe("Vault contract address to filter to a single vault (omit for platform-wide TVL)"),
-    },
+    "Get the total TVL (Total Value Locked) across all ATV vaults from the Aarna engine database.",
+    {},
     { annotations: { title: "Get Total TVL", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
-    async ({ address }) => {
-      const data = await engineService.getTotalTvl(address);
+    async () => {
+      const data = await engineService.getTotalTvl();
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     },
   );

@@ -30,15 +30,11 @@ class EngineService {
         headers: { Authorization: env.ENGINE_API_KEY },
       });
     } catch (err: any) {
-      throw new Error(
-        `Failed to reach engine API at ${url}: ${err.message}`,
-      );
+      throw new Error(`Failed to reach engine API at ${url}: ${err.message}`);
     }
 
     if (!response.ok) {
-      throw new Error(
-        `Engine API returned HTTP ${response.status} for ${url}`,
-      );
+      throw new Error(`Engine API returned HTTP ${response.status} for ${url}`);
     }
 
     return response.json() as Promise<T>;
@@ -69,7 +65,11 @@ class EngineService {
    * Returns the underlying token portfolio for the vault.
    */
   async getVaultPortfolio(vaultAddress: string): Promise<unknown> {
-    return this.get("/afi/vault-balance-data", { vaultAddress });
+    const { data } = await this.get<{ data: unknown }>(
+      "/afi/vault-balance-data",
+      { vaultAddress },
+    );
+    return data;
   }
 
   /**
@@ -80,9 +80,16 @@ class EngineService {
     userAddress: string,
     vaultAddress?: string,
   ): Promise<unknown> {
-    const params: Record<string, string> = { address: userAddress };
+    const params: Record<string, any> = {
+      address: userAddress,
+      metaInfo: false,
+    };
     if (vaultAddress) params.vaultAddress = vaultAddress;
-    return this.get("/afi/user-investments", params);
+    const { data } = await this.get<{ data: unknown }>(
+      "/afi/user-investments",
+      params,
+    );
+    return data;
   }
 
   /**
@@ -128,13 +135,12 @@ class EngineService {
   }
 
   /**
-   * GET /afi/total-tvl?vault_address=<addr>
-   * Returns platform-wide or per-vault TVL from the engine DB.
+   * GET /afi/total-tvl
+   * Returns platform-wide TVL from the engine DB.
    */
-  async getTotalTvl(vaultAddress?: string): Promise<unknown> {
-    const params: Record<string, string> = {};
-    if (vaultAddress) params.vault_address = vaultAddress;
-    return this.get("/afi/total-tvl", params);
+  async getTotalTvl(): Promise<unknown> {
+    const { data } = await this.get<{ data: unknown }>("/afi/total-tvl");
+    return data;
   }
 }
 

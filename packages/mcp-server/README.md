@@ -96,7 +96,7 @@ Add to `.vscode/settings.json`:
 | `get_vault_portfolio` | Underlying token portfolio |
 | `get_historical_nav` | NAV over a period (7, 30, 60, 360, max) |
 | `get_historical_tvl` | TVL over a period (7, 30, 60, 360, max) |
-| `get_total_tvl` | Platform-wide or per-vault TVL |
+| `get_total_tvl` | Platform-wide TVL |
 | `get_user_investments` | User portfolio and positions |
 
 ## Example Prompts

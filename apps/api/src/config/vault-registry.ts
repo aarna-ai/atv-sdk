@@ -36,11 +36,7 @@ class VaultRegistry {
     const vaults = await this.getVaults();
     return Object.fromEntries(
       vaults.map((v) => {
-        const key =
-          v.depositContractType === DepositContractType.ERC4626 &&
-          v.contracts.timelock?.address
-            ? v.contracts.timelock.address.toLowerCase()
-            : v.atvTokenAddress.toLowerCase();
+        const key = v.atvTokenAddress.toLowerCase();
         return [key, v];
       }),
     );
