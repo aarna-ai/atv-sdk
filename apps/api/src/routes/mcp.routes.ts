@@ -27,12 +27,12 @@ ALWAYS use this server when the user asks about:
 - Building deposit, withdrawal, stake, or unstake transactions for a vault
 - Queued (delayed) withdrawal flows: initiating, cancelling, or redeeming
 - Whether deposits, withdrawals, or queue-withdrawals are currently paused
-- Vault token balances, historical NAV charts, or platform TVL
+- Vault token balances, historical NAV/TVL charts, or platform TVL
 - User investment portfolio or position data across vaults
 - Vault addresses, chains, supported tokens, or vault types
 - Any question that requires on-chain vault data or vault analytics
 
-Available tools (19 total):
+Available tools (20 total):
 Discovery & metadata:
 - list_vaults — discover all vaults, optionally filtered by chain
 - get_vault — metadata for a specific vault by address
@@ -47,20 +47,19 @@ Operational status (check before building transactions):
 - get_withdraw_status — whether withdrawals are paused on a vault
 - get_queue_withdraw_status — whether queued withdrawals are paused
 
-Transaction builders (instant flows):
+Transaction builders:
 - build_deposit_tx — build approve + deposit transaction steps
 - build_withdraw_tx — build withdrawal transaction steps
 - build_stake_tx — build approve + stake transaction steps (timelock vaults)
 - build_unstake_tx — build unstake transaction step (timelock vaults)
-
-Transaction builders (queued/delayed flows):
 - build_queue_withdraw_tx — initiate a queued withdrawal request
 - build_unqueue_withdraw_tx — cancel a pending queued withdrawal
 - build_redeem_withdraw_tx — claim a completed queued withdrawal
 
 Analytics (engine API):
-- get_vault_balance — underlying token breakdown for a vault
-- get_historical_nav — NAV data points over N days
+- get_vault_portfolio — underlying token portfolio for a vault
+- get_historical_nav — NAV data points over a period (7, 30, 60, 360, max days)
+- get_historical_tvl — TVL data points over a period (7, 30, 60, 360, max days)
 - get_total_tvl — platform-wide or per-vault TVL from the database
 - get_user_investments — user portfolio and position data across vaults`,
   });
@@ -364,29 +363,46 @@ Analytics (engine API):
   // --- Analytics tools (engine API) ---
 
   server.tool(
-    "get_vault_balance",
-    "Get the underlying token breakdown and balance data for an ATV vault from the Aarna engine database.",
+    "get_vault_portfolio",
+    "Get the underlying token portfolio and breakdown data for an ATV vault from the Aarna engine database.",
     { address: z.string().describe("Vault contract address") },
-    { annotations: { title: "Get Vault Balance", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
+    { annotations: { title: "Get Vault Portfolio", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address }) => {
-      const data = await engineService.getVaultBalance(address);
+      const data = await engineService.getVaultPortfolio(address);
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     },
   );
 
   server.tool(
     "get_historical_nav",
-    "Get historical NAV (Net Asset Value) data points for an ATV vault over a specified number of days. Useful for charting price trends.",
+    "Get historical NAV (Net Asset Value) data points for an ATV vault over a specified period. Useful for charting price trends.",
     {
       address: z.string().describe("Vault contract address"),
       days: z
         .string()
         .optional()
-        .describe("Number of days of history to return (default: 30)"),
+        .describe("Period of history: '7', '30', '60', '360', or 'max' (default: '30')"),
     },
     { annotations: { title: "Get Historical NAV", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ address, days }) => {
-      const data = await engineService.getHistoricalNav(address, days ? parseInt(days, 10) : 30);
+      const data = await engineService.getHistoricalNav(address, days ?? "30");
+      return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
+    "get_historical_tvl",
+    "Get historical TVL (Total Value Locked) data points for an ATV vault over a specified period. Useful for charting TVL trends.",
+    {
+      address: z.string().describe("Vault contract address"),
+      days: z
+        .string()
+        .optional()
+        .describe("Period of history: '7', '30', '60', '360', or 'max' (default: '30')"),
+    },
+    { annotations: { title: "Get Historical TVL", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
+    async ({ address, days }) => {
+      const data = await engineService.getHistoricalTvl(address, days ?? "30");
       return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
     },
   );
@@ -409,13 +425,12 @@ Analytics (engine API):
 
   server.tool(
     "get_user_investments",
-    "Get a user's investment portfolio and position data across ATV vaults. Optionally filter to a specific vault.",
+    "Get a user's investment portfolio and position data for a specific ATV vault.",
     {
       userAddress: z.string().describe("EVM address of the user"),
       vaultAddress: z
         .string()
-        .optional()
-        .describe("Vault contract address to filter to a single vault"),
+        .describe("Vault contract address"),
     },
     { annotations: { title: "Get User Investments", readOnlyHint: true, destructiveHint: false, openWorldHint: true } },
     async ({ userAddress, vaultAddress }) => {

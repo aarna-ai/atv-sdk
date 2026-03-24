@@ -111,14 +111,14 @@ export const vaultsHandler = {
         }
     },
 
-    getVaultBalance: async (
+    getVaultPortfolio: async (
         req: Request<{ address: string }>,
         res: Response,
         next: NextFunction,
     ) => {
         try {
-            const data = await engineService.getVaultBalance(req.params.address);
-            res.json({ data, message: 'Vault balance retrieved', statusCode: 200 });
+            const data = await engineService.getVaultPortfolio(req.params.address);
+            res.json({ data, message: 'Vault portfolio retrieved', statusCode: 200 });
         } catch (err) {
             next(err);
         }
@@ -130,9 +130,23 @@ export const vaultsHandler = {
         next: NextFunction,
     ) => {
         try {
-            const days = req.query.days ? parseInt(req.query.days, 10) : 30;
+            const days = req.query.days ?? '30';
             const data = await engineService.getHistoricalNav(req.params.address, days);
             res.json({ data, message: 'Historical NAV retrieved', statusCode: 200 });
+        } catch (err) {
+            next(err);
+        }
+    },
+
+    getHistoricalTvl: async (
+        req: Request<{ address: string }, {}, {}, HistoricalNavQuery>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        try {
+            const days = req.query.days ?? '30';
+            const data = await engineService.getHistoricalTvl(req.params.address, days);
+            res.json({ data, message: 'Historical TVL retrieved', statusCode: 200 });
         } catch (err) {
             next(err);
         }

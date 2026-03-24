@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![GitHub](https://img.shields.io/github/stars/aarna-ai/atv-sdk?style=social)](https://github.com/aarna-ai/atv-sdk)
 
-AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 19 tools for vault discovery, performance metrics, transaction building, and portfolio tracking.
+AI-native access to Aarna's tokenized yield vaults on Ethereum and Base. 20 tools for vault discovery, performance metrics, transaction building, and portfolio tracking.
 
 **API Base URL:** `https://atv-api.aarna.ai`
 **MCP Endpoint:** `https://atv-api.aarna.ai/mcp` (Streamable HTTP)
@@ -129,8 +129,9 @@ Add to `.vscode/settings.json`:
 ### Analytics
 | Tool | Description |
 |------|-------------|
-| `get_vault_balance` | Underlying token breakdown |
-| `get_historical_nav` | NAV data points over N days |
+| `get_vault_portfolio` | Underlying token portfolio |
+| `get_historical_nav` | NAV data points over a period (7, 30, 60, 360, max) |
+| `get_historical_tvl` | TVL data points over a period (7, 30, 60, 360, max) |
 | `get_total_tvl` | Platform-wide or per-vault TVL |
 | `get_user_investments` | User portfolio and positions |
 
@@ -158,8 +159,9 @@ All endpoints require `x-api-key` header and are prefixed with `/v1`.
 | GET | `/v1/vaults/:address/deposit-status` | Deposit pause status |
 | GET | `/v1/vaults/:address/withdraw-status` | Withdraw pause status |
 | GET | `/v1/vaults/:address/queue-withdraw-status` | Queue-withdraw pause status |
-| GET | `/v1/vaults/:address/balance` | Token breakdown |
-| GET | `/v1/vaults/:address/historical-nav` | Historical NAV |
+| GET | `/v1/vaults/:address/portfolio` | Token portfolio |
+| GET | `/v1/vaults/:address/historical-nav` | Historical NAV (days: 7,30,60,360,max) |
+| GET | `/v1/vaults/:address/historical-tvl` | Historical TVL (days: 7,30,60,360,max) |
 
 ### Transaction Endpoints
 | Method | Path | Description |

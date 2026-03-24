@@ -708,16 +708,16 @@ export const openApiSpec = {
       },
     },
 
-    "/v1/vaults/{address}/balance": {
+    "/v1/vaults/{address}/portfolio": {
       get: {
-        summary: "Get vault balance",
-        description: "Returns the underlying token breakdown and balance data for a vault from the Aarna engine database.",
-        operationId: "getVaultBalance",
+        summary: "Get vault portfolio",
+        description: "Returns the underlying token portfolio and breakdown data for a vault from the Aarna engine database.",
+        operationId: "getVaultPortfolio",
         tags: ["Analytics"],
         parameters: [{ $ref: "#/components/parameters/VaultAddress" }],
         responses: {
           "200": {
-            description: "Vault balance data",
+            description: "Vault portfolio data",
             content: {
               "application/json": {
                 schema: {
@@ -741,7 +741,7 @@ export const openApiSpec = {
     "/v1/vaults/{address}/historical-nav": {
       get: {
         summary: "Get historical NAV",
-        description: "Returns historical NAV data points for a vault over a specified number of days.",
+        description: "Returns historical NAV data points for a vault over a specified period. Each data point contains a timestamp and NAV value.",
         operationId: "getHistoricalNav",
         tags: ["Analytics"],
         parameters: [
@@ -750,19 +750,76 @@ export const openApiSpec = {
             name: "days",
             in: "query",
             required: false,
-            description: "Number of days of history to return (default: 30)",
-            schema: { type: "integer", example: 30, default: 30 },
+            description: "Period of history: 7, 30, 60, 360, or 'max' (default: 30)",
+            schema: { type: "string", example: "30", default: "30", enum: ["7", "30", "60", "360", "max"] },
           },
         ],
         responses: {
           "200": {
-            description: "Historical NAV data",
+            description: "Historical NAV data points",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    data: { type: "object" },
+                    data: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          timestamp: { type: "integer", description: "Unix timestamp in milliseconds" },
+                          nav: { type: "string", description: "NAV value as a decimal string" },
+                        },
+                      },
+                    },
+                    message: { type: "string" },
+                    statusCode: { type: "integer", example: 200 },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "429": { $ref: "#/components/responses/RateLimited" },
+        },
+      },
+    },
+
+    "/v1/vaults/{address}/historical-tvl": {
+      get: {
+        summary: "Get historical TVL",
+        description: "Returns historical TVL data points for a vault over a specified period. Each data point contains a timestamp and TVL value.",
+        operationId: "getHistoricalTvl",
+        tags: ["Analytics"],
+        parameters: [
+          { $ref: "#/components/parameters/VaultAddress" },
+          {
+            name: "days",
+            in: "query",
+            required: false,
+            description: "Period of history: 7, 30, 60, 360, or 'max' (default: 30)",
+            schema: { type: "string", example: "30", default: "30", enum: ["7", "30", "60", "360", "max"] },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Historical TVL data points",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          timestamp: { type: "integer", description: "Unix timestamp in milliseconds" },
+                          tvl: { type: "string", description: "TVL value as a decimal string" },
+                        },
+                      },
+                    },
                     message: { type: "string" },
                     statusCode: { type: "integer", example: 200 },
                   },
@@ -932,7 +989,7 @@ export const openApiSpec = {
         description:
           "Returns an ordered array of `TxStep` objects to stake vault tokens into a timelock contract. Pre-flight checks: vault must support staking, user must have sufficient vault token balance.\n\nResponse is 1–2 steps:\n- 1 step → stake only (allowance sufficient)\n- 2 steps → approve then stake",
         operationId: "buildStakeTx",
-        tags: ["Staking"],
+        tags: ["Transactions"],
         parameters: [
           {
             name: "userAddress",
@@ -990,7 +1047,7 @@ export const openApiSpec = {
         summary: "Build unstake transaction",
         description: "Returns a `TxStep` to unstake vault tokens from a timelock contract.",
         operationId: "buildUnstakeTx",
-        tags: ["Staking"],
+        tags: ["Transactions"],
         parameters: [
           {
             name: "userAddress",
@@ -1049,7 +1106,7 @@ export const openApiSpec = {
         description:
           "Initiates a queued (delayed) withdrawal. The withdrawal must be redeemed separately once it is processed by the vault. Only available on vaults with `STANDARD` or `STANDARD_AUTO_REDEEM` withdraw type.",
         operationId: "buildQueueWithdrawTx",
-        tags: ["Queued Withdrawals"],
+        tags: ["Transactions"],
         parameters: [
           {
             name: "userAddress",
@@ -1107,7 +1164,7 @@ export const openApiSpec = {
         summary: "Build unqueue-withdraw transaction",
         description: "Cancels a pending queued withdrawal request.",
         operationId: "buildUnqueueWithdrawTx",
-        tags: ["Queued Withdrawals"],
+        tags: ["Transactions"],
         parameters: [
           {
             name: "userAddress",
@@ -1165,7 +1222,7 @@ export const openApiSpec = {
         summary: "Build redeem-withdraw transaction",
         description: "Claims (redeems) a completed queued withdrawal from a vault.",
         operationId: "buildRedeemWithdrawTx",
-        tags: ["Queued Withdrawals"],
+        tags: ["Transactions"],
         parameters: [
           {
             name: "userAddress",
@@ -1235,8 +1292,8 @@ export const openApiSpec = {
           {
             name: "vaultAddress",
             in: "query",
-            required: false,
-            description: "Filter to a specific vault (omit for all vaults)",
+            required: true,
+            description: "Vault contract address",
             schema: { type: "string", example: "0xVaultAddress..." },
           },
         ],
@@ -1275,19 +1332,11 @@ export const openApiSpec = {
     },
     {
       name: "Transactions",
-      description: "Build ready-to-send transaction calldata for deposits and withdrawals",
-    },
-    {
-      name: "Staking",
-      description: "Build stake and unstake transaction calldata for timelock vaults",
-    },
-    {
-      name: "Queued Withdrawals",
-      description: "Build queue, unqueue, and redeem transaction calldata for delayed withdrawals",
+      description: "Build ready-to-send transaction calldata for deposits, withdrawals, staking, and queued withdrawals",
     },
     {
       name: "Analytics",
-      description: "Vault balances, historical NAV charts, TVL, and user investment data",
+      description: "Vault portfolio, historical NAV charts, TVL, and user investment data",
     },
   ],
 };

@@ -26,6 +26,9 @@ const EnvSchema = z.object({
     .string()
     .url()
     .default("https://engine.aarna.ai/api/v2"),
+
+  // API key for engine backend (passed as Authorization header)
+  ENGINE_API_KEY: z.string().min(1),
 });
 
 export const env = EnvSchema.parse(process.env);

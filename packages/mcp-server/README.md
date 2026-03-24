@@ -2,7 +2,7 @@
 
 MCP server connector for **ATV** — AI-native access to Aarna's tokenized DeFi yield vaults on Ethereum and Base.
 
-19 tools for vault discovery, performance metrics (NAV, TVL, APY), deposit/withdraw/stake transaction building, and portfolio tracking.
+20 tools for vault discovery, performance metrics (NAV, TVL, APY), deposit/withdraw/stake transaction building, and portfolio tracking.
 
 ## Setup
 
@@ -93,8 +93,9 @@ Add to `.vscode/settings.json`:
 | `build_queue_withdraw_tx` | Initiate queued withdrawal |
 | `build_unqueue_withdraw_tx` | Cancel pending queued withdrawal |
 | `build_redeem_withdraw_tx` | Claim completed queued withdrawal |
-| `get_vault_balance` | Underlying token breakdown |
-| `get_historical_nav` | NAV over N days |
+| `get_vault_portfolio` | Underlying token portfolio |
+| `get_historical_nav` | NAV over a period (7, 30, 60, 360, max) |
+| `get_historical_tvl` | TVL over a period (7, 30, 60, 360, max) |
 | `get_total_tvl` | Platform-wide or per-vault TVL |
 | `get_user_investments` | User portfolio and positions |
 

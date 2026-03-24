@@ -26,7 +26,9 @@ class EngineService {
 
     let response: Response;
     try {
-      response = await fetch(url.toString());
+      response = await fetch(url.toString(), {
+        headers: { Authorization: env.ENGINE_API_KEY },
+      });
     } catch (err: any) {
       throw new Error(
         `Failed to reach engine API at ${url}: ${err.message}`,
@@ -64,9 +66,9 @@ class EngineService {
 
   /**
    * GET /afi/vault-balance-data?vaultAddress=<address>
-   * Returns the underlying token breakdown for the vault.
+   * Returns the underlying token portfolio for the vault.
    */
-  async getVaultBalance(vaultAddress: string): Promise<unknown> {
+  async getVaultPortfolio(vaultAddress: string): Promise<unknown> {
     return this.get("/afi/vault-balance-data", { vaultAddress });
   }
 
@@ -85,13 +87,44 @@ class EngineService {
 
   /**
    * GET /afi/historical-nav-graph?vaultAddress=<addr>&days=<n>
-   * Returns NAV data points over the requested number of days.
+   * Returns arrays of [timestamp, nav, tvl] over the requested period.
+   * @param days — 7, 30, 60, 360, or "max"
    */
-  async getHistoricalNav(vaultAddress: string, days: number): Promise<unknown> {
-    return this.get("/afi/historical-nav-graph", {
-      vaultAddress,
-      days: days.toString(),
-    });
+  async getHistoricalNavGraph(
+    vaultAddress: string,
+    days: string,
+  ): Promise<unknown> {
+    return this.get("/afi/historical-nav-graph", { vaultAddress, days });
+  }
+
+  /**
+   * GET /afi/historical-nav-graph — returns [timestamp, nav, tvl] arrays.
+   * This method extracts only the NAV series: { timestamp, nav }[]
+   */
+  async getHistoricalNav(
+    vaultAddress: string,
+    days: string,
+  ): Promise<{ timestamp: number; nav: string }[]> {
+    const raw = (await this.getHistoricalNavGraph(vaultAddress, days)) as {
+      data?: [number, string, string][];
+    };
+    const points = raw.data ?? [];
+    return points.map(([timestamp, nav]) => ({ timestamp, nav }));
+  }
+
+  /**
+   * GET /afi/historical-nav-graph — returns [timestamp, nav, tvl] arrays.
+   * This method extracts only the TVL series: { timestamp, tvl }[]
+   */
+  async getHistoricalTvl(
+    vaultAddress: string,
+    days: string,
+  ): Promise<{ timestamp: number; tvl: string }[]> {
+    const raw = (await this.getHistoricalNavGraph(vaultAddress, days)) as {
+      data?: [number, string, string][];
+    };
+    const points = raw.data ?? [];
+    return points.map(([timestamp, , tvl]) => ({ timestamp, tvl }));
   }
 
   /**

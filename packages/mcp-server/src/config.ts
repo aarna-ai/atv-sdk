@@ -7,7 +7,7 @@ export const MCP_SERVER_NAME = "atv";
 /** MCP server version. */
 export const MCP_SERVER_VERSION = "1.0.0";
 
-/** All 19 tools exposed by the ATV MCP server. */
+/** All 20 tools exposed by the ATV MCP server. */
 export const TOOLS = [
   // Discovery & metadata
   "list_vaults",
@@ -30,8 +30,9 @@ export const TOOLS = [
   "build_unqueue_withdraw_tx",
   "build_redeem_withdraw_tx",
   // Analytics
-  "get_vault_balance",
+  "get_vault_portfolio",
   "get_historical_nav",
+  "get_historical_tvl",
   "get_total_tvl",
   "get_user_investments",
 ] as const;

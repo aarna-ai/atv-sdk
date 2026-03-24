@@ -19,5 +19,6 @@ vaultsRouter.get('/:address/apy', vaultsHandler.getAPY);
 vaultsRouter.get('/:address/deposit-status', vaultsHandler.getDepositStatus);
 vaultsRouter.get('/:address/withdraw-status', vaultsHandler.getWithdrawStatus);
 vaultsRouter.get('/:address/queue-withdraw-status', vaultsHandler.getQueueWithdrawStatus);
-vaultsRouter.get('/:address/balance', vaultsHandler.getVaultBalance);
+vaultsRouter.get('/:address/portfolio', vaultsHandler.getVaultPortfolio);
 vaultsRouter.get('/:address/historical-nav', vaultsHandler.getHistoricalNav);
+vaultsRouter.get('/:address/historical-tvl', vaultsHandler.getHistoricalTvl);

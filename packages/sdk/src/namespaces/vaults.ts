@@ -55,4 +55,41 @@ export class VaultsNamespace {
         );
         return data.data;
     }
+
+    /**
+     * Get the underlying token portfolio for a vault.
+     * @param address — vault atvTokenAddress
+     */
+    async portfolio(address: string): Promise<unknown> {
+        const { data } = await this.http.get<ApiResponse<unknown>>(
+            `/v1/vaults/${address}/portfolio`,
+        );
+        return data.data;
+    }
+
+    /**
+     * Get historical NAV data points for a vault.
+     * @param address — vault atvTokenAddress
+     * @param days — period: '7', '30', '60', '360', or 'max' (default '30')
+     */
+    async historicalNav(address: string, days?: string): Promise<unknown> {
+        const { data } = await this.http.get<ApiResponse<unknown>>(
+            `/v1/vaults/${address}/historical-nav`,
+            { params: { days } },
+        );
+        return data.data;
+    }
+
+    /**
+     * Get historical TVL data points for a vault.
+     * @param address — vault atvTokenAddress
+     * @param days — period: '7', '30', '60', '360', or 'max' (default '30')
+     */
+    async historicalTvl(address: string, days?: string): Promise<unknown> {
+        const { data } = await this.http.get<ApiResponse<unknown>>(
+            `/v1/vaults/${address}/historical-tvl`,
+            { params: { days } },
+        );
+        return data.data;
+    }
 }
