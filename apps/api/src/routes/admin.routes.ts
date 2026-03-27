@@ -3,7 +3,7 @@ import { adminAuthMiddleware } from '../middleware/adminAuth.middleware';
 import * as admin from '../handlers/admin.handler';
 import { adminLogin } from '../handlers/adminLogin.handler';
 
-export const adminRouter = Router();
+export const adminRouter: Router = Router();
 
 // Login is unauthenticated — it issues the session token
 adminRouter.post('/login', adminLogin);
