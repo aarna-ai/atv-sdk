@@ -55,6 +55,7 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/dashboard/dist apps/dashboard/dist
 COPY apps/api/migrations apps/api/migrations
+COPY llms.txt ./
 
 ENV NODE_ENV=production
 ENV PORT=3000
