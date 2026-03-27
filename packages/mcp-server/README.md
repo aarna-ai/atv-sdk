@@ -1,5 +1,8 @@
 # @aarna-ai/mcp-server-atv
 
+[![npm version](https://img.shields.io/npm/v/@aarna-ai/mcp-server-atv)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
+[![npm downloads](https://img.shields.io/npm/dt/@aarna-ai/mcp-server-atv?label=downloads&logo=npm)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
+
 MCP server connector for **ATV** — AI-native access to Aarna's tokenized DeFi yield vaults on Ethereum and Base.
 
 20 tools for vault discovery, performance metrics (NAV, TVL, APY), deposit/withdraw/stake transaction building, and portfolio tracking.

@@ -5,6 +5,7 @@ import { RequestVolumeChart } from '../components/charts/RequestVolumeChart';
 import { StatusBreakdownChart } from '../components/charts/StatusBreakdownChart';
 import { UserAgentChart } from '../components/charts/UserAgentChart';
 import { RecentRequestsTable } from '../components/tables/RecentRequestsTable';
+import { NpmDownloadsCard } from '../components/cards/NpmDownloadsCard';
 import { useAnalytics } from '../hooks/useAnalytics';
 import {
     fetchOverview,
@@ -61,6 +62,11 @@ export function OverviewPage() {
                             label="Avg Latency"
                             value={`${overview.data.avg_response_time_ms ?? 0}ms`}
                         />
+                    </div>
+
+                    {/* NPM download stats */}
+                    <div className="mb-6">
+                        <NpmDownloadsCard />
                     </div>
 
                     {/* Request volume chart */}
