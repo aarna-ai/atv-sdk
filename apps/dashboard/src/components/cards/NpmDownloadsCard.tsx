@@ -73,12 +73,9 @@ export function NpmDownloadsCard() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    {/* npm logo */}
-                    <svg width="32" height="12" viewBox="0 0 780 304" xmlns="http://www.w3.org/2000/svg" aria-label="npm">
-                        <path fill="#CB3837" d="M0 0h780v240H0z"/>
-                        <path fill="#fff" d="M240 0h300v240H360V60h-60v180H240zM0 0h240v240H60V60H0zM60 60h60v120h60V60h60v180H60zM480 0h300v240H600V60h-60v180H480z"/>
-                        <path fill="#CB3837" d="M540 60h60v120h60V60h60v180H540z"/>
-                        <path fill="#fff" d="M0 242h780v62H0z"/>
+                    {/* npm cube mark (Simple Icons) */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-label="npm">
+                        <path fill="#CB3837" d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/>
                     </svg>
                     <h3 className="text-sm font-medium text-gray-700">Downloads</h3>
                 </div>

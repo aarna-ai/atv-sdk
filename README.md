@@ -1,7 +1,7 @@
 # ATV — DeFi Yield Vault MCP Server
 
 [![npm version](https://img.shields.io/npm/v/@aarna-ai/mcp-server-atv)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
-[![npm downloads](https://img.shields.io/npm/dm/@aarna-ai/mcp-server-atv?label=downloads%2Fmonth&logo=npm)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
+[![npm downloads](https://img.shields.io/npm/dm/@aarna-ai/mcp-server-atv?logo=npm&color=CB3837)](https://www.npmjs.com/package/@aarna-ai/mcp-server-atv)
 [![smithery badge](https://smithery.ai/badge/aarna-ai/atv)](https://smithery.ai/servers/aarna-ai/atv)
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.aarna--ai%2Fatv-blue)](https://registry.modelcontextprotocol.io/servers/io.github.aarna-ai/atv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
