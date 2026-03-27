@@ -57,6 +57,12 @@ export const fetchUserAgents = (period: Period) =>
 export const fetchRecentRequests = (limit?: number) =>
     api.get<RecentRequest[]>('/admin/analytics/recent', { params: { limit } }).then((r) => r.data);
 
+// NPM download stats
+export const fetchNpmDownloads = () =>
+    api.get<{ total: number; monthly: number; weekly: number; trend: { downloads: number; day: string }[] }>(
+        '/admin/analytics/npm-downloads',
+    ).then((r) => r.data);
+
 // DeFi-specific analytics
 export const fetchTopVaults = (period: Period) =>
     api.get<TopVault[]>('/admin/analytics/top-vaults', { params: { period } }).then((r) => r.data);

@@ -8,10 +8,9 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts';
+import { fetchNpmDownloads } from '../../api/analytics';
 
 const PACKAGE = '@aarna-ai/mcp-server-atv';
-const TODAY = new Date().toISOString().slice(0, 10);
-const NPM_BASE = 'https://api.npmjs.org/downloads';
 
 interface TrendPoint {
     day: string;
@@ -42,35 +41,19 @@ export function NpmDownloadsCard() {
 
         async function load() {
             try {
-                const [rangeRes, monthlyRes, weeklyRes] = await Promise.all([
-                    fetch(`${NPM_BASE}/range/2000-01-01:${TODAY}/${PACKAGE}`),
-                    fetch(`${NPM_BASE}/point/last-month/${PACKAGE}`),
-                    fetch(`${NPM_BASE}/point/last-week/${PACKAGE}`),
-                ]);
-
-                if (!rangeRes.ok || !monthlyRes.ok || !weeklyRes.ok) {
-                    throw new Error('npm registry request failed');
-                }
-
-                const [rangeData, monthlyData, weeklyData] = await Promise.all([
-                    rangeRes.json(),
-                    monthlyRes.json(),
-                    weeklyRes.json(),
-                ]);
+                const data = await fetchNpmDownloads();
 
                 if (cancelled) return;
 
-                const allDownloads: TrendPoint[] = rangeData.downloads ?? [];
-                const total = allDownloads.reduce((sum, d) => sum + d.downloads, 0);
-                const trend = allDownloads.slice(-30).map((d) => ({
+                const trend = (data.trend ?? []).map((d) => ({
                     day: new Date(d.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
                     downloads: d.downloads,
                 }));
 
                 setState({
-                    total,
-                    monthly: monthlyData.downloads ?? 0,
-                    weekly: weeklyData.downloads ?? 0,
+                    total: data.total,
+                    monthly: data.monthly,
+                    weekly: data.weekly,
                     trend,
                     loading: false,
                     error: null,

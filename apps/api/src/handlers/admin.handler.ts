@@ -4,6 +4,42 @@ import { pool } from '../db/postgres';
 import { env } from '../config/env';
 import { Tier, TIER_RATE_LIMITS } from '../types/vault.types';
 
+const NPM_PACKAGE = '@aarna-ai/mcp-server-atv';
+const NPM_BASE = 'https://api.npmjs.org/downloads';
+
+export async function getNpmDownloads(_req: Request, res: Response): Promise<void> {
+    const today = new Date().toISOString().slice(0, 10);
+    const pkg = encodeURIComponent(NPM_PACKAGE);
+
+    const [rangeRes, monthlyRes, weeklyRes] = await Promise.all([
+        fetch(`${NPM_BASE}/range/2000-01-01:${today}/${pkg}`),
+        fetch(`${NPM_BASE}/point/last-month/${pkg}`),
+        fetch(`${NPM_BASE}/point/last-week/${pkg}`),
+    ]);
+
+    if (!rangeRes.ok || !monthlyRes.ok || !weeklyRes.ok) {
+        res.status(502).json({ error: 'npm registry request failed' });
+        return;
+    }
+
+    const [rangeData, monthlyData, weeklyData] = await Promise.all([
+        rangeRes.json() as Promise<{ downloads: { downloads: number; day: string }[] }>,
+        monthlyRes.json() as Promise<{ downloads: number }>,
+        weeklyRes.json() as Promise<{ downloads: number }>,
+    ]);
+
+    const allDownloads = rangeData.downloads ?? [];
+    const total = allDownloads.reduce((sum: number, d: { downloads: number }) => sum + d.downloads, 0);
+    const trend = allDownloads.slice(-30);
+
+    res.json({
+        total,
+        monthly: monthlyData.downloads ?? 0,
+        weekly: weeklyData.downloads ?? 0,
+        trend,
+    });
+}
+
 const VALID_PERIODS: Record<string, string> = {
     '24h': '24 hours',
     '7d': '7 days',
