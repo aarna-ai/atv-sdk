@@ -1,0 +1,156 @@
+# ATV — DeFi Yield Vault API
+
+> Integrate Aarna's tokenized yield vaults on Ethereum and Base. Query vault metrics, build transactions, and track portfolios — all without touching smart contracts directly.
+
+API Base: https://atv-api.aarna.ai
+MCP Endpoint: https://atv-api.aarna.ai/mcp (Streamable HTTP)
+API Docs: https://atv-api.aarna.ai/docs
+OpenAPI Spec: https://atv-api.aarna.ai/openapi.json
+Agent Card: https://atv-api.aarna.ai/.well-known/agent.json
+
+## Authentication
+
+All endpoints require an `x-api-key` header. Keys are prefixed `atv_` and issued by the Aarna team (dev@aarnalab.dev).
+
+## Endpoints
+
+### Vault Discovery & Metadata
+- GET /v1/vaults — List all vaults. Optional query: chain=ethereum|base
+- GET /v1/vaults/:address — Vault metadata (label, chain, deposit tokens, withdraw types)
+
+### Performance Metrics
+- GET /v1/vaults/:address/nav — Current NAV (Net Asset Value) in USD
+- GET /v1/vaults/:address/tvl — Current TVL (Total Value Locked) in USD
+- GET /v1/vaults/:address/apy — APY breakdown: base + reward + total
+- GET /v1/vaults/tvl — Platform-wide TVL across all vaults
+
+### Operational Status
+- GET /v1/vaults/:address/deposit-status — Whether deposits are paused
+- GET /v1/vaults/:address/withdraw-status — Whether withdrawals are paused
+- GET /v1/vaults/:address/queue-withdraw-status — Whether queued withdrawals are paused
+
+### Transaction Builders (Instant)
+- GET /v1/deposit-tx?vaultAddress=&tokenAddress=&amount=&userAddress= — Build approve + deposit steps
+- GET /v1/withdraw-tx?vaultAddress=&shares=&userAddress= — Build withdrawal steps
+- GET /v1/stake-tx?vaultAddress=&amount=&userAddress= — Build approve + stake steps (timelock vaults)
+- GET /v1/unstake-tx?vaultAddress=&amount=&userAddress= — Build unstake step (timelock vaults)
+
+### Transaction Builders (Queued)
+- GET /v1/queue-withdraw-tx?vaultAddress=&shares=&userAddress= — Initiate a queued withdrawal
+- GET /v1/unqueue-withdraw-tx?vaultAddress=&userAddress= — Cancel a pending queued withdrawal
+- GET /v1/redeem-withdraw-tx?vaultAddress=&userAddress= — Claim a completed queued withdrawal
+
+### Analytics
+- GET /v1/vaults/:address/portfolio — Underlying token portfolio breakdown
+- GET /v1/vaults/:address/historical-nav?days=30 — Historical NAV data points (7, 30, 60, 360, max)
+- GET /v1/vaults/:address/historical-tvl?days=30 — Historical TVL data points (7, 30, 60, 360, max)
+- GET /v1/user-investments?userAddress= — User portfolio and positions across vaults
+
+### Unauthenticated
+- GET /health — Health check
+- GET /openapi.json — OpenAPI 3.1 specification
+- GET /docs — Interactive API reference (Scalar)
+- GET /.well-known/agent.json — A2A agent card
+
+## MCP Tools (19)
+
+The same functionality is available as MCP tools via the /mcp endpoint:
+
+- list_vaults — List all vaults, optionally filter by chain
+- get_vault — Get metadata for a specific vault
+- get_vault_nav — Current NAV in USD
+- get_vault_tvl — Current TVL in USD
+- get_vault_apy — APY breakdown (base + reward + total)
+- get_deposit_status — Whether deposits are paused
+- get_withdraw_status — Whether withdrawals are paused
+- get_queue_withdraw_status — Whether queued withdrawals are paused
+- build_deposit_tx — Build approve + deposit transaction steps
+- build_withdraw_tx — Build withdrawal transaction steps
+- build_stake_tx — Build approve + stake steps (timelock vaults)
+- build_unstake_tx — Build unstake step (timelock vaults)
+- build_queue_withdraw_tx — Initiate a queued withdrawal
+- build_unqueue_withdraw_tx — Cancel a pending queued withdrawal
+- build_redeem_withdraw_tx — Claim a completed queued withdrawal
+- get_vault_portfolio — Underlying token portfolio
+- get_historical_nav — NAV data points over a period
+- get_historical_tvl — TVL data points over a period
+- get_total_tvl — Platform-wide or per-vault TVL
+- get_user_investments — User portfolio and positions
+
+## Key Concepts
+
+- **Vaults** are identified by their on-chain contract address (e.g. 0x...)
+- **Deposit** returns an array of transaction steps: [approveTx, depositTx]. They must be sent in order.
+- **Withdraw types**: INSTANT (immediate), STANDARD (timelock), STANDARD_AUTO_REDEEM (auto-redeemed after timelock)
+- **Queued withdrawals** follow a 3-step lifecycle: queue -> wait -> redeem
+- **Timelock vaults** require staking/unstaking in addition to deposit/withdraw
+- **NAV** = Net Asset Value per share in USD
+- **TVL** = Total Value Locked in USD
+- **APY** is broken down into base yield + reward yield
+
+## Rate Limits
+
+Limits are per API key, enforced via sliding window (60-second window):
+- Free tier: 60 requests/minute
+- Pro tier: 300 requests/minute
+- Enterprise tier: 1000 requests/minute
+
+Rate limit headers are returned on every response:
+- X-RateLimit-Limit — Max requests per window
+- X-RateLimit-Remaining — Remaining requests in current window
+- X-RateLimit-Reset — Seconds until window resets
+
+## Response Format
+
+All responses are JSON. Successful responses return the data directly. Errors return:
+```json
+{
+  "error": "Human-readable error message",
+  "statusCode": 400
+}
+```
+
+## TypeScript SDK
+
+```typescript
+import { AtvClient } from '@atv/sdk';
+
+const client = new AtvClient({
+  apiKey: 'atv_...',
+  baseUrl: 'https://atv-api.aarna.ai',
+});
+
+const vaults = await client.vaults.list({ chain: 'base' });
+const nav = await client.vaults.nav('0xVaultAddress');
+const depositTx = await client.transactions.deposit({
+  vaultAddress: '0x...',
+  tokenAddress: '0x...',
+  amount: '1000000',
+  userAddress: '0x...',
+});
+```
+
+## MCP Client Configuration
+
+### Claude Desktop
+```json
+{
+  "mcpServers": {
+    "atv": {
+      "url": "https://atv-api.aarna.ai/mcp",
+      "headers": { "x-api-key": "YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+### Claude Code
+```bash
+claude mcp add atv --transport http https://atv-api.aarna.ai/mcp --header "x-api-key: YOUR_API_KEY"
+```
+
+## Source Code
+
+GitHub: https://github.com/aarna-ai/atv-sdk
+npm (MCP): https://www.npmjs.com/package/@aarna-ai/mcp-server-atv
+License: MIT

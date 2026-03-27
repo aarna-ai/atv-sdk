@@ -29,6 +29,12 @@ const EnvSchema = z.object({
 
   // API key for engine backend (passed as Authorization header)
   ENGINE_API_KEY: z.string().min(1),
+
+  // Analytics dashboard — SHA-256 hex hash of the admin password
+  ADMIN_SECRET_HASH: z.string().length(64).optional(),
+  // Session TTL in seconds (default: 8 hours)
+  ADMIN_SESSION_TTL: z.string().default("28800").transform(Number),
+  LOG_RETENTION_DAYS: z.string().default("90").transform(Number),
 });
 
 export const env = EnvSchema.parse(process.env);

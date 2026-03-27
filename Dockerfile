@@ -4,6 +4,7 @@ RUN corepack enable && corepack prepare pnpm@10.30.2 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
+COPY apps/dashboard/package.json apps/dashboard/
 COPY packages/sdk/package.json packages/sdk/
 RUN pnpm install --frozen-lockfile
 
@@ -13,12 +14,14 @@ RUN corepack enable && corepack prepare pnpm@10.30.2 --activate
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps /app/apps/dashboard/node_modules ./apps/dashboard/node_modules
 COPY --from=deps /app/packages/sdk/node_modules ./packages/sdk/node_modules
 COPY tsconfig.base.json ./
 COPY apps/api apps/api
+COPY apps/dashboard apps/dashboard
 COPY packages/sdk packages/sdk
 COPY pnpm-workspace.yaml package.json ./
-RUN pnpm --filter api build
+RUN pnpm --filter api build && pnpm --filter dashboard build
 
 # ── Stage 3: Fetch secrets (intermediate — discarded from final image) ──
 FROM amazon/aws-cli:latest AS secrets
@@ -44,11 +47,13 @@ COPY --from=secrets /tmp/.env .env
 # Copy workspace config & install production deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
+COPY apps/dashboard/package.json apps/dashboard/
 COPY packages/sdk/package.json packages/sdk/
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy compiled output.
 COPY --from=build /app/apps/api/dist apps/api/dist
+COPY --from=build /app/apps/dashboard/dist apps/dashboard/dist
 COPY apps/api/migrations apps/api/migrations
 
 ENV NODE_ENV=production

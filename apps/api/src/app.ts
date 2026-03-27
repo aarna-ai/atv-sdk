@@ -1,3 +1,4 @@
+import path from 'path';
 import { apiReference } from '@scalar/express-api-reference';
 import cors from 'cors';
 import express, { Application } from 'express';
@@ -5,15 +6,18 @@ import helmet from 'helmet';
 import { openApiSpec } from './config/openapi';
 import { v1Router } from './routes';
 import { mcpRouter } from './routes/mcp.routes';
+import { adminRouter } from './routes/admin.routes';
+import { requestLogMiddleware } from './middleware/requestLog.middleware';
 
 export function createApp(): Application {
     const app = express();
 
     app.use(helmet());
     app.use(cors({
-        allowedHeaders: ['Content-Type', 'Accept', 'x-api-key'],
+        allowedHeaders: ['Content-Type', 'Accept', 'x-api-key', 'Authorization'],
     }));
     app.use(express.json());
+    app.use(requestLogMiddleware);
 
     app.get('/', (_req, res) => {
         res.redirect('/docs');
@@ -87,6 +91,11 @@ export function createApp(): Application {
         res.json(openApiSpec);
     });
 
+    // LLM-friendly documentation
+    app.get('/llms.txt', (_req, res) => {
+        res.sendFile(path.join(__dirname, '../../../llms.txt'));
+    });
+
     // Scalar API reference UI — no auth required, served at /docs
     // Remove CSP for /docs only: Scalar loads from multiple external CDNs and
     // its own proxy, so per-route allowlisting is impractical.
@@ -104,8 +113,16 @@ export function createApp(): Application {
         }),
     );
 
+    app.use('/admin', adminRouter);
     app.use('/v1', v1Router);
     app.use('/mcp', mcpRouter);
+
+    // Dashboard — serve static React build
+    const dashboardDist = path.join(__dirname, '../../dashboard/dist');
+    app.use('/dashboard', express.static(dashboardDist));
+    app.get('/dashboard/*', (_req, res) => {
+        res.sendFile(path.join(dashboardDist, 'index.html'));
+    });
 
     // Global error handler — must be last
     app.use(

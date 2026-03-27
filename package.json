@@ -5,7 +5,9 @@
     "dev": "pnpm --filter api dev",
     "build": "pnpm --filter api build && pnpm --filter @atv/sdk build",
     "migrate": "pnpm --filter api migrate",
-    "seed-key": "pnpm --filter api seed-key"
+    "seed-key": "pnpm --filter api seed-key",
+    "dashboard:dev": "pnpm --filter dashboard dev",
+    "dashboard:build": "pnpm --filter dashboard build"
   },
   "devDependencies": {
     "typescript": "^5.3.0"

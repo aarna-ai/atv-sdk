@@ -186,6 +186,7 @@ All endpoints require `x-api-key` header and are prefixed with `/v1`.
 | GET | `/health` | Health check |
 | GET | `/openapi.json` | OpenAPI 3.1 spec |
 | GET | `/docs` | Interactive API reference |
+| GET | `/llms.txt` | LLM-friendly documentation ([llms.txt spec](https://llmstxt.org/)) |
 | GET | `/.well-known/agent.json` | A2A agent card |
 
 ## TypeScript SDK

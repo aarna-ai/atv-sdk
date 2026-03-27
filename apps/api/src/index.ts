@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import { createApp } from "./app";
 import { pool } from "./db/postgres";
 import { runMigrations } from "./db/migrate";
+import { scheduleLogCleanup } from "./db/cleanup";
 import { env } from "./config/env";
 
 async function bootstrap() {
@@ -12,6 +13,8 @@ async function bootstrap() {
   console.log("Running migrations...");
   await runMigrations();
   console.log("Migrations complete");
+
+  scheduleLogCleanup();
 
   // Automatically kill any process using the configured port
   try {

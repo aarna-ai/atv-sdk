@@ -1313,6 +1313,11 @@ export const openApiSpec = {
     },
   },
 
+  externalDocs: {
+    description: "llms.txt — LLM-friendly documentation",
+    url: "https://atv-api.aarna.ai/llms.txt",
+  },
+
   tags: [
     {
       name: "Vaults",
